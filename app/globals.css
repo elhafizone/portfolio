@@ -1,0 +1,337 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   DESIGN TOKENS
+   White-dominant editorial system. #70BA65 is an accent, never a surface.
+   ========================================================================== */
+
+@layer base {
+  :root {
+    /* Surfaces */
+    --paper: #ffffff;
+    --surface: #f7f7f4;
+
+    /* Ink */
+    --ink: #0d0d0d;
+    --ink-soft: #262626;
+    --ink-mute: #6e6e6e; /* 5.1:1 on white - safe for body text */
+    --ink-faint: #a8a8a2; /* decorative only - never body copy */
+    --rule: #e7e7e1;
+    --rule-strong: #d5d5cd;
+
+    /* Accent - brand green */
+    --accent: #70ba65; /* fills, marks, decoration */
+    --accent-ink: #3e7a36; /* 5.2:1 on white - accent TEXT and links */
+    --accent-deep: #2f5c29;
+    --accent-wash: rgba(112, 186, 101, 0.1);
+    --accent-veil: rgba(112, 186, 101, 0.04);
+
+    /* Fluid type scale */
+    --step-mega: clamp(2.6rem, 6.8vw, 7.5rem);
+    --step-display: clamp(2.6rem, 7.6vw, 7.5rem);
+    --step-h2: clamp(2rem, 4.6vw, 4.25rem);
+    --step-h3: clamp(1.375rem, 2.2vw, 2rem);
+    --step-lead: clamp(1.0625rem, 1.35vw, 1.4rem);
+    --step-body: clamp(0.9375rem, 1.02vw, 1.0625rem);
+
+    /* Rhythm */
+    --gutter: clamp(1.25rem, 4.5vw, 4.5rem);
+    --section-y: clamp(6rem, 13vh, 11rem);
+    --shell: 96rem;
+
+    /* Motion */
+    --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-swift: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  * {
+    @apply border-rule;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: auto; /* Lenis owns scrolling */
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--step-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /*
+      `clip`, never `hidden`.
+
+      Per spec, `overflow-x: hidden` forces the other axis to compute to `auto`,
+      which turns <body> into a scroll container. ScrollTrigger then pins against
+      the wrong scroller and pinned sections bleed over their neighbours.
+      `overflow-x: clip` suppresses horizontal overflow without creating a
+      scroll box, so the document stays the scroller.
+    */
+    overflow-x: clip;
+  }
+
+  /* Lenis is active only when the html element carries the class. */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: #ffffff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  img,
+  video,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  /* Reduced motion: strip transitions, keep every bit of content. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   COMPONENT PRIMITIVES
+   ========================================================================== */
+
+@layer components {
+  .shell {
+    width: 100%;
+    max-width: var(--shell);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .section {
+    padding-block: var(--section-y);
+    position: relative;
+  }
+
+  /* Micro label: mono, tracked out, tiny. The editorial signature detail. */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    line-height: 1;
+  }
+
+  .label--accent {
+    color: var(--accent-ink);
+  }
+
+  /* Label with the small green tick mark in front. */
+  .label-marked {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .label-marked::before {
+    content: "";
+    width: 0.375rem;
+    height: 0.375rem;
+    background: var(--accent);
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .display {
+    font-size: var(--step-display);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 0.94;
+  }
+
+  .mega {
+    font-size: var(--step-mega);
+    font-weight: 500;
+    letter-spacing: -0.045em;
+    line-height: 0.86;
+  }
+
+  .h2 {
+    font-size: var(--step-h2);
+    font-weight: 500;
+    letter-spacing: -0.032em;
+    line-height: 1;
+  }
+
+  .lead {
+    font-size: var(--step-lead);
+    line-height: 1.5;
+    color: var(--ink-mute);
+    letter-spacing: -0.01em;
+    text-wrap: pretty;
+  }
+
+  .serif-accent {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    color: var(--accent-ink);
+  }
+
+  /* Editorial index numeral used across sections. */
+  .numeral {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  /* Underline that draws in on hover - used on text links. */
+  .link-underline {
+    position: relative;
+    display: inline-block;
+  }
+
+  .link-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.45s var(--ease-editorial);
+  }
+
+  .link-underline:hover::after,
+  .link-underline:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Faint vertical grid lines, used sparingly as a background detail. */
+  .grid-lines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    .grid-lines {
+      display: block;
+      background-image: linear-gradient(to right, var(--rule) 1px, transparent 1px);
+      background-size: calc(100% / 6) 100%;
+      opacity: 0.55;
+      -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+      mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+    }
+  }
+}
+
+/* ==========================================================================
+   MOTION PRIMITIVES
+   Elements start hidden ONLY when JS motion is confirmed available, so a
+   failed animation layer can never permanently hide content.
+   ========================================================================== */
+
+@layer utilities {
+  html[data-motion="on"] [data-reveal] .reveal-line > span {
+    transform: translateY(115%);
+  }
+
+  html[data-motion="on"] [data-fade] {
+    opacity: 0;
+  }
+
+  html[data-motion="on"] [data-mask-image] > * {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  .reveal-line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.06em;
+    margin-bottom: -0.06em;
+  }
+
+  .reveal-line > span {
+    display: block;
+    will-change: transform;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+/* ==========================================================================
+   CUSTOM CURSOR - desktop, fine pointer, motion-allowed only
+   ========================================================================== */
+
+.cursor-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-cursor="on"] body,
+  html[data-cursor="on"] a,
+  html[data-cursor="on"] button,
+  html[data-cursor="on"] [role="button"] {
+    cursor: none;
+  }
+}

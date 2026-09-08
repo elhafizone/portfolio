@@ -2,270 +2,229 @@
 
 Personal portfolio for **Mohammed Al-Hafiz**, Creative Designer & WordPress Developer.
 
-Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · GSAP + ScrollTrigger · Lenis.
+Bilingual (Arabic default, English at `/en`) · Next.js 15 App Router · React 19 ·
+TypeScript · Tailwind CSS · GSAP + ScrollTrigger · Lenis · raw WebGL2.
 
 ```bash
-npm run dev        # http://localhost:3000
-npm run build      # production build
-npm run start      # serve the production build
-npm run typecheck  # tsc --noEmit
+npm run dev          # http://localhost:3210
+npm run typecheck    # tsc --noEmit
 npm run lint
+
+npm run build:prod   # production build  -> .next-prod
+npm run start:prod   # serve it          -> http://localhost:3211
 ```
+
+> **Never run `npm run build` while `npm run dev` is running.** They share
+> `.next`, so the build deletes the chunks the dev server is serving and it
+> throws `MODULE_NOT_FOUND` on every request until restarted. `build:prod` and
+> `start:prod` write to `.next-prod` for exactly this reason — use those.
 
 ---
 
-## Before this goes live
+## Environment
 
-Everything below is deliberately empty rather than invented. Nothing in the UI
-fakes a value: unset links are hidden, unset project slots are labelled as
-reserved, and the contact form refuses to claim a message was sent when no
-inbox is connected.
+Copy `.env.example` to `.env.local` and fill it in. `.env.local` is gitignored;
+**the same variables must also be set on the host**, or production falls back to
+the placeholder domain.
 
-### 1. `config/site.ts`
-
-| Field | What to put there |
+| Variable | Effect if missing |
 | --- | --- |
-| `siteConfig.url` | The production domain. Feeds canonical, OpenGraph, sitemap and robots. |
-| `contactConfig.email` | Public contact address. Empty = the Email link is not rendered. |
-| `contactConfig.whatsapp` | International format, digits only. |
-| `contactConfig.linkedin` / `.mostaql` / `.behance` | Full profile URLs. |
-| `contactConfig.location` | Optional, shown in the footer. |
+| `NEXT_PUBLIC_SITE_URL` | **Site becomes unindexable.** Falls back to `https://example.com`, and `indexable` flips false → `robots.txt` serves `Disallow: /` and every page carries `noindex, nofollow`. |
+| `CONTACT_TO_EMAIL` + `RESEND_API_KEY` | Contact form answers `501` and tells the visitor it is not connected. |
+| `CONTACT_FROM_EMAIL` | Optional. Until the domain is DNS-verified in Resend, mail sends from Resend's shared `onboarding@resend.dev`, which is more likely to be filtered as spam. |
+| `CONTACT_WEBHOOK_URL` | Alternative to Resend — POSTs the enquiry as JSON. |
+| `NEXT_PUBLIC_ANALYTICS_ID` | Nothing loads. Analytics is opt-in. |
 
-Any channel left as `''` simply does not appear — there are no dead links.
-
-### 2. `data/testimonials.ts` — already done
-
-Six client reviews are transcribed **verbatim** from the public Mostaql profile
-at `https://mostaql.com/u/Kamali-MGD`, which the Reviews section links to so a
-visitor can verify every quote, name and number.
-
-Each review is stored in the client's original Arabic with `verbatim: true`, and
-rendered in a real `<blockquote>` with `lang="ar" dir="rtl"`. The English
-underneath is stored separately as `textEn` and is always labelled
-**"Translation"** — it is never presented as the client's own words.
-
-The profile is listed under محمد الكمالي, one of Mohammed’s two family names.
-The ratings panel says so beneath the verify link — see "Two family names, one
-person" below.
-
-### 3. `data/projects.ts` — already done
-
-Nine live client sites are published, each linking to the real site:
-
-| # | Project | Sector | Stack |
-| --- | --- | --- | --- |
-| 01 | Haboob (هبوب) | Fragrance brand | WordPress, Elementor, Arabic RTL |
-| 02 | Dr. Helmi's Dental Centre | Dental clinic, Dubai | WordPress, Elementor |
-| 03 | Akram Abubakr (أكرم أبوبكر) | Law practice | WordPress, Elementor, Fluent Forms |
-| 04 | Tebra (تبرا) | Corporate services, KSA | WordPress, Elementor, Fluent Forms |
-| 05 | Eng. Mahmoud Hassan | Personal brand | WordPress, WooCommerce, Elementor |
-| 06 | Pets Veterinary Clinic | Vet clinic, Doha | WordPress, WooCommerce, **Amelia**, Elementor |
-| 07 | Sahara Azl (صحاري عزل) | Industrial B2B, KSA | WordPress, Elementor, Arabic RTL |
-| 08 | Sakhr for Specialized Contracting | Contracting | WordPress, WooCommerce, Elementor |
-| 09 | Si Austral | Events & attractions, AU | WordPress, Elementor, Fluent Forms |
-
-Pets Veterinary Clinic is the live proof for **Amelia**, which the Tools section
-claims — worth keeping in the set for that reason alone.
-
-`technologies` were read from each site's actual markup, not assumed. Haboob is
-Elementor **without** WooCommerce, so it is not described as a store.
-
-`year` is `'—'` on every entry: launch dates were never supplied, and a
-plausible-looking year would be an invented fact. Fill them in when known.
-
-Screenshots in `public/work/` were captured through a third-party screenshot
-service at one viewport (1600×1067 @2x), cropped to the top 3:2 slice and
-encoded to WebP. Replace any of them with your own export at 1800×1200 and
-nothing else needs changing.
-
-**Do not set `isPlaceholder: false` on an entry whose copy is still invented** —
-that flag is the only thing keeping this section truthful.
-
-### 4. Images to prepare
-
-`data/images.ts` is the single source of truth. Every slot shows a **numbered
-placeholder in the live page** stating its own required size, so the site itself
-is the brief.
-
-Project screenshots are done. **Three images are still outstanding:**
-
-| # | What | Size (px) | Ratio | Save as | Wire up in |
-|---|---|---|---|---|---|
-| 01 | Hero visual (beside the headline) | 1400 × 1400 | 1:1 | `public/hero/hero-visual.webp` | `data/images.ts` → `heroImage` + `heroImageAlt` |
-| 02 | Portrait of Mohammed | 1200 × 1500 | 4:5 | `public/about/portrait.webp` | `data/profile.ts` → `profile.portrait` |
-| 03 | Social share card | 1200 × 630 | 1.91:1 | `public/og.jpg` | `data/images.ts` → `ogImage` |
-
-Slot 01 is the most important — it is the first thing a visitor sees, and it
-carries the hero on its own now that the 3D object has been removed.
-
-Sizes are 2× the largest display size, so they stay sharp on retina screens.
-Next.js generates the smaller responsive variants and the AVIF/WebP encodings
-automatically — supply one high-quality source per slot.
-
-Remember to set `imageAlt` alongside any new `image` — an empty alt on a project
-shot is an accessibility regression.
-
-### 5. Contact form delivery
-
-`app/api/contact/route.ts` validates the payload and hands it to whichever
-provider is configured by environment variable:
-
-```bash
-# Option A — email via Resend
-RESEND_API_KEY=re_xxx
-CONTACT_TO_EMAIL=you@yourdomain.com
-CONTACT_FROM_EMAIL=hello@yourdomain.com   # optional
-
-# Option B — any webhook (Zapier, Make, n8n, a WordPress endpoint…)
-CONTACT_WEBHOOK_URL=https://…
-```
-
-With neither set, the route returns **501** and the form tells the visitor the
-inbox is not connected yet. It never reports a false success.
-
-### 6. Analytics (optional)
-
-```bash
-NEXT_PUBLIC_ANALYTICS_ID=…
-```
-
-Nothing loads unless this is set. The integration point is in
-`config/site.ts` (`analyticsConfig`); wire in the provider script when needed.
+The `noindex` fallback is deliberate: a preview or temporary host must never
+outrank the real domain.
 
 ---
 
-## What the content is based on
+## Bilingual architecture
 
-All biographical and skills content comes from information supplied by Mohammed
-Al-Hafiz. Deliberately **not** present anywhere in this codebase:
+Arabic is the **default** locale and is served **without a prefix**.
 
-- employer names, job titles at named companies, or employment dates
-- degrees, certifications or awards
-- revenue figures or project result metrics (the six published projects link
-  to the live sites instead of claiming outcomes)
-- a fabricated portrait (the About section uses a typographic identity plate
-  instead; set `profile.portrait` to swap in a real photograph)
+```
+/         → rewritten internally to /ar    (URL stays "/")
+/ar       → 308 redirect to /              (one canonical address per page)
+/en       → served as-is
+```
+
+| File | Role |
+| --- | --- |
+| `lib/i18n.ts` | Locale list, default, `dir` map, `localePath()`. The single source of truth. |
+| `middleware.ts` | The rewrite/redirect above. Metadata routes (`opengraph-image`, `icon`) are excluded — they are assets, and redirecting them made social crawlers take a 308 hop for the share card. |
+| `data/content/en.ts` | **Defines the dictionary shape.** Deliberately not `as const`: a const assertion would make every value its own literal type and Arabic could never satisfy it. |
+| `data/content/ar.ts` | Typed `Dictionary`, so a missing or renamed key **fails the build** instead of silently falling back to English. |
+| `components/i18n/LocaleProvider.tsx` | `useLocale()` → `{ locale, dir, isRtl, t, fill, other }`. |
+
+Facts (names, dates, employers, URLs) stay in `data/*.ts`, never in the
+dictionaries, so a translation cannot quietly change one.
+
+### Arabic typography — the non-obvious parts
+
+Arabic is not "the same design, mirrored". Three things genuinely break:
+
+1. **Negative letter-spacing.** Latin display type is tightened to `-0.045em`
+   here. Arabic letters join; tightening collides the joins. Reset to `normal`.
+2. **Positive letter-spacing** on micro labels (`0.18em`) pulls *connected*
+   letters apart into disconnected glyphs. Reset to `normal`.
+3. **Almarai has no weight between 400 and 700.** The design uses 500 for
+   headings and 600 for the accent word, and CSS resolves a missing 500
+   *downwards* — so Arabic headings silently rendered at body weight. The RTL
+   block in `globals.css` restates every display level at a weight the family
+   actually ships (700 headings, 800 accent, 700 for `.font-medium`).
+
+Direction itself is handled by `dir` on `<html>` plus logical properties
+(`ps-`/`pe-`/`ms-`/`me-`/`start-`/`end-`). Only what CSS cannot express
+logically is listed in the RTL block: `transform-origin`, the hover underline
+sweep, and the horizontal rail's travel direction.
+
+---
+
+## The hero water surface
+
+`components/hero/RippleField.tsx` — a procedural gradient with a real fluid
+surface on it, in raw WebGL2 (no three.js).
+
+The height field integrates the **damped 2D wave equation** on the GPU with an
+explicit finite-difference scheme, plus a **viscosity** term
+(`nu * laplacian(v)`, the Navier–Stokes momentum diffusion) so short wavelengths
+dissipate faster than long ones and ripples soften as they spread. Because the
+medium is simulated rather than the individual ripples, interference and
+reflection fall out for free.
+
+- **`WAVE_SPEED` must stay ≤ 0.5.** It is the Courant number; the scheme is
+  conditionally stable and diverges above the CFL limit. Held at 0.28.
+- **`VISCOSITY` is the softness dial** (0.11; stable to 0.25).
+- The pointer adds to **velocity**, not height — a momentum kick, which is why
+  the disturbance leaves as an expanding ring. It is applied along the segment
+  swept since the last frame, so fast movement leaves a continuous wake.
+- Boundaries **absorb** via a sponge layer, so waves leave instead of echoing.
+- **No opacity is ever applied to the text.** See the note in `lib/animations.ts`.
+
+The canvas is `position: absolute; inset: 0` — out of flow, so it cannot feed
+back into layout. An earlier WebGL hero measured its own container while the
+container sized itself from content, and the hero grew on every resize.
+
+Falls back to a matching CSS gradient under reduced motion or without WebGL2.
+The reason is readable from the DOM as `data-ripple` on the host element.
+
+---
+
+## Motion rules the codebase enforces
+
+- Every ScrollTrigger comes from a factory in `lib/animations.ts` and lives in a
+  `gsap.context()`, so unmounting a section reverts what it created.
+- Durations, easings, breakpoints and scroll distances live in `config/motion.ts`.
+- No global `overwrite` default. Where two systems animate one region they target
+  different elements: the hero entrance owns `[data-hero]`, the scroll transition
+  owns `[data-hero-layer]`. Nothing is written by both.
+- Scroll scenes are held by CSS `position: sticky`, **never GSAP `pin`**.
+  ScrollTrigger reports progress and owns no layout, so a stale trigger can at
+  worst leave an index wrong — it cannot make sections overlap.
+- `body` uses `overflow-x: clip`, never `hidden`. `hidden` forces the other axis
+  to `auto`, turning body into a scroll container and breaking sticky.
+- The horizontal rail does **not** use `containerAnimation`. That technique
+  assumes the container travels in the negative-x direction; in RTL the track
+  travels positive and every panel froze at its from-state. Position is measured
+  from the track's own `x`, so LTR and RTL run the identical code path.
+- Reveals pre-hide elements only under `html[data-motion="on"]`, which requires
+  JS to have run. JS off ⇒ nothing is hidden.
+
+### Motion, degraded
+
+Two conditions drop the motion layer, both leaving the site fully usable:
+
+1. **`prefers-reduced-motion: reduce`**
+2. **A stalled frame loop** — `MotionProvider` samples `requestAnimationFrame`
+   for 2.5s. Below ~8fps on a *visible* tab it behaves as if reduced motion were
+   requested. Hidden tabs are exempt and re-sampled when shown.
+
+Sticky scenes do not render their stage at all when motion is off — they fall
+back to list layouts at every width, because a stage that cannot advance would
+strand every item after the first.
+
+---
+
+## Content rules
+
+Deliberately **not** present anywhere in this codebase:
+
+- employer names tied to job titles, or employment dates beyond the CV timeline
+- degrees, certifications or awards that were not supplied
+- revenue figures or project result metrics
 - invented or paraphrased review text presented as a quotation
 
-Client feedback is quoted **verbatim** from the public Mostaql profile, in the
-Arabic the clients wrote. Client names and project titles appear exactly as the
-platform displays them. English translations are labelled as translations.
+**Client reviews** (`data/testimonials.ts`) are quoted **verbatim** in the Arabic
+the clients wrote, in a real `<blockquote>` with `lang`/`dir`. `textEn` is stored
+separately and always labelled *Translation* — and is hidden from Arabic readers,
+who do not need it. Client names, project titles and the source platform were
+removed at Mohammed's request; **do not reintroduce them**, and do not add a
+rating figure the site no longer shows a source for.
 
-Ratings are presented as Mostaql platform ratings across six criteria. They are
-never relabelled as Google, Trustpilot, or an invented aggregate score. The
-"30 projects completed" and "23 client ratings" figures are read off the same
-profile, which is linked from the section.
+**Projects** (`data/projects.ts`) are nine live client sites, each linking to the
+real thing. `technologies` were read from each site's actual markup. `year` is
+`'—'` throughout because launch dates were never supplied, and a plausible year
+would be an invented fact.
 
-## Two family names, one person
+**Two family names.** Mohammed's full name is محمد أحمد الكمالي محمد الحافظ and
+he uses **Al-Kamali** and **Al-Hafiz** interchangeably. The site is branded
+Al-Hafiz, matching the logo; both are declared as `alternateName` in the JSON-LD
+so the site stays findable under either. To rebrand, change `profile.name` only.
 
-Mohammed's full name is **محمد أحمد الكمالي محمد الحافظ**, and he uses
-**Al-Kamali** and **Al-Hafiz** interchangeably.
+---
 
-The site is branded **Mohammed Al-Hafiz**, matching the `hafizone` logo. The
-Mostaql profile the reviews link to (`mostaql.com/u/Kamali-MGD`) is listed under
-**محمد الكمالي**.
+## SEO
 
-That mismatch is handled explicitly rather than hidden: the ratings panel prints
-the profile name directly beneath the "Verify on Mostaql" link, so a visitor
-knows before clicking. Both names are also declared as `alternateName` in the
-JSON-LD, which keeps the site findable under either.
-
-Everything lives in `data/profile.ts`:
-
-| Field | Purpose |
-| --- | --- |
-| `name` | The branded name. Feeds navbar, footer, About, title, OpenGraph, JSON-LD. |
-| `fullName` | Full legal name. |
-| `alternateNames` | Other names in use — emitted as schema.org `alternateName`. |
-
-To rebrand the site to Al-Kamali, change `profile.name` only. Everything
-downstream follows, and the note under the verify link keeps making sense
-because it prints whichever name the profile is under.
+- Arabic canonical is the bare domain; `hreflang` covers `ar`, `en` and
+  `x-default`, emitted from both pages and inside `sitemap.xml`.
+- `app/[locale]/opengraph-image.tsx` **generates** the 1200×630 share card at
+  build time from the brand tokens. It is deliberately Latin-only: `ImageResponse`
+  has no Arabic-capable font unless one is fetched and embedded, and missing
+  glyphs would render as tofu.
+- `sitemap.ts` reads `siteConfig.contentUpdatedAt`, **not** `new Date()`. Stamping
+  the clock tells crawlers the content changed on every deploy, and they learn to
+  distrust the field. Bump it when the copy actually changes.
+- `app/icon.png` / `app/apple-icon.png` are the logo's "H" alone — the full
+  wordmark is illegible at 16px and has the wrong aspect ratio for an icon slot.
 
 ---
 
 ## Architecture
 
 ```
-app/            routes, metadata, sitemap/robots, contact API
-config/         site.ts (URLs, contact, analytics) · motion.ts (durations, easings, breakpoints)
-data/           profile · projects · services · expertise · experience · process · testimonials · social
-lib/            gsap.ts (plugin registration, capability probes) · animations.ts (all ScrollTrigger factories) · contact.ts (shared validation)
+app/
+  [locale]/     layout (fonts, metadata, JSON-LD) · page · not-found · opengraph-image
+  api/contact/  validation + delivery (Resend or webhook)
+  sitemap.ts robots.ts globals.css icon.png apple-icon.png
+middleware.ts   locale rewrite/redirect
+config/         site.ts (URL, contact, analytics) · motion.ts (durations, easings, breakpoints)
+data/
+  content/      en.ts (shape) · ar.ts · index.ts (getDictionary, fill)
+  profile · projects · services · expertise · experience · process · testimonials · social · images
+lib/            i18n · gsap (registration, capability probes) · animations (ScrollTrigger factories) · contact (shared validation)
 components/
+  i18n/         LocaleProvider
   layout/       Navbar · Footer · SiteShell
   motion/       MotionProvider (Lenis + reduced motion + frame watchdog) · SplitText · Reveal · Parallax · MagneticButton
-  hero/ projects/ services/ expertise/ experience/ process/ testimonials/ about/ contact/
-  webgl/        parked - see "The 3D hero object is parked"
-  ui/           Logo · Button · Cursor · Preloader · SectionHeading
+  hero/         Hero · RippleField
+  projects/ services/ expertise/ experience/ process/ testimonials/ about/ contact/
+  ui/           Logo · Button · Cursor · Preloader · SectionHeading · ImagePlaceholder
 ```
 
-**Motion rules the codebase enforces:**
+## Images
 
-- Every ScrollTrigger is created by a factory in `lib/animations.ts` and lives
-  inside a `gsap.context()`, so unmounting a section reverts everything it made.
-- Durations, easings, breakpoints and scroll distances live in
-  `config/motion.ts`. No magic numbers in components.
-- No global `overwrite` default. Where two systems animate the same region they
-  target different elements: the hero entrance owns inner nodes (`[data-hero]`)
-  and the scroll transition owns wrappers (`[data-hero-layer]`). Nothing is
-  written by both, so neither can kill the other.
-- Scroll-driven scenes are held by CSS `position: sticky`, never GSAP's `pin`.
-  ScrollTrigger reports progress and owns no layout, so a stale trigger can at
-  worst leave an index wrong — it cannot make scenes overlap each other.
-- `body` uses `overflow-x: clip`, never `hidden`. `hidden` forces the other axis
-  to compute as `auto`, which turns body into a scroll container and breaks
-  sticky positioning.
-- The reveal system pre-hides elements **only** under `html[data-motion="on"]`,
-  which requires JS to have run and motion to be allowed. JS off ⇒ nothing is
-  hidden.
+`data/images.ts` is the single source of truth for outstanding image slots. Every
+slot renders a **numbered placeholder in the live page** stating its own required
+size, so the site itself is the brief. Set `imageAlt` alongside any new `image` —
+an empty alt is an accessibility regression.
 
-## Motion, degraded
-
-Two independent conditions drop the motion layer, and both leave the site fully
-usable:
-
-1. **`prefers-reduced-motion: reduce`** — no smooth scroll, no scroll-linked
-   timelines, no custom cursor, no magnetic buttons.
-2. **A stalled frame loop** — `MotionProvider` samples `requestAnimationFrame`
-   for 2.5s. Below ~8fps on a *visible* tab, it strips the pre-hide states and
-   behaves as if reduced motion were requested. A hidden tab is exempt and gets
-   re-sampled when it becomes visible, so a page opened in a background tab is
-   not penalised.
-
-Critically, the sticky scenes (Selected Work, Services, Process, Client
-Feedback) do not render their stage at all when motion is off. They fall back to
-the list layouts at every width, because a stage that cannot advance would
-strand every item after the first.
-
-## The 3D hero object is parked
-
-`components/webgl/` and `components/hero/HeroVisual.tsx` are still in the repo
-but nothing mounts them, so `three` is no longer bundled at all.
-
-It was removed because the canvas sized itself from its container while the
-container was `height: 100%` inside the hero grid — each resize fed the next and
-the cell crept downward during scroll. To bring it back, mount it inside a box
-with a **fixed aspect ratio or fixed pixel height**, never a percentage height,
-and re-check that the hero row height stays constant while scrolling.
-
-`three`, `@react-three/fiber` and `@react-three/drei` are kept in
-`package.json` for that reason. Remove them if the 3D idea is abandoned.
-
-## Logo
-
-`components/ui/Logo.tsx` owns the asset. To swap it: replace `public/logo.png`
-and update `LOGO_ASSET` (`src`, `width`, `height`). Only height is set in CSS,
-so the proportions of the supplied lockup are preserved.
+Project screenshots and the portrait are supplied. The hero no longer takes an
+image, and the share card is generated, so **nothing is outstanding**.
 
 ## Adding case-study pages
 
-The data model already supports them: give a project a `caseStudyUrl` of
-`/work/<slug>` and add `app/work/[slug]/page.tsx`. The project card links there
-automatically once `isPlaceholder` is `false`.
-
-## Arabic / RTL later
-
-Copy is centralised in `data/`, the layout uses logical properties
-(`padding-inline`, `margin-inline`) in the shared primitives, and `dir` is set
-in one place on `<html>` in `app/layout.tsx`. No RTL UI is built yet, but
-nothing in the layout blocks it.
+Give a project a `caseStudyUrl` of `/work/<slug>` and add
+`app/work/[slug]/page.tsx`. The card links there automatically once
+`isPlaceholder` is `false`.

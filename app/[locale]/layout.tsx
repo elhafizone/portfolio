@@ -122,7 +122,12 @@ export async function generateMetadata({
         'max-image-preview': 'large',
       },
     },
-    icons: { icon: '/logo.png', apple: '/logo.png' },
+    /*
+      `icons` is deliberately absent. It used to point at /logo.png, a 1003x589
+      wordmark: wrong aspect ratio for an icon slot, and an illegible smudge at
+      16px. app/icon.png and app/apple-icon.png now carry the logo's H alone,
+      and the file convention wires them up with the right sizes and types.
+    */
   };
 }
 

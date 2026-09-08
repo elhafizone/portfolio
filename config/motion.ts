@@ -47,7 +47,6 @@ export const MEDIA = {
 export const SCROLL = {
   horizontalPadding: 0.6,
   servicePerStep: 0.85,
-  testimonialPerItem: 0.7,
   processPerStep: 0.7,
 } as const;
 

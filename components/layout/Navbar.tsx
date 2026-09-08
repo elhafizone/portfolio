@@ -1,16 +1,18 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useLocale } from '@/components/i18n/LocaleProvider';
 import { MagneticButton } from '@/components/motion/MagneticButton';
 import { useMotion } from '@/components/motion/MotionProvider';
 import { Logo } from '@/components/ui/Logo';
-import { navLinks } from '@/config/site';
-import { profile } from '@/data/profile';
 import { gsap, registerGsap } from '@/lib/gsap';
+import { htmlLang, localeName, localePath } from '@/lib/i18n';
 
 export function Navbar() {
   const { scrollTo, setScrollLocked, reduced } = useMotion();
+  const { t, other } = useLocale();
   const [elevated, setElevated] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeId, setActiveId] = useState<string>('');
@@ -27,9 +29,8 @@ export function Navbar() {
 
   /* --- track which section is in view --------------------------------- */
   useEffect(() => {
-    const ids = navLinks.map((l) => l.href.slice(1));
-    const sections = ids
-      .map((id) => document.getElementById(id))
+    const sections = t.nav.links
+      .map((link) => document.getElementById(link.href.slice(1)))
       .filter((el): el is HTMLElement => Boolean(el));
     if (!sections.length) return;
 
@@ -45,7 +46,7 @@ export function Navbar() {
 
     sections.forEach((s) => observer.observe(s));
     return () => observer.disconnect();
-  }, []);
+  }, [t]);
 
   /* --- overlay open/close animation ----------------------------------- */
   useEffect(() => {
@@ -113,13 +114,30 @@ export function Navbar() {
     [scrollTo, reduced]
   );
 
+  /**
+   * Language switch. A real navigation rather than a client-side flip, so the
+   * document comes back from the server with the right `lang` and `dir`.
+   */
+  const languageSwitch = (
+    <Link
+      href={localePath(other)}
+      hrefLang={htmlLang[other]}
+      lang={htmlLang[other]}
+      prefetch={false}
+      data-cursor-label="LANG"
+      className="label rounded-full border border-rule px-3 py-2 text-ink-soft transition-colors duration-300 hover:border-accent hover:text-accent-ink"
+    >
+      {localeName[other]}
+    </Link>
+  );
+
   return (
     <>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[110] focus:rounded-full focus:bg-ink focus:px-5 focus:py-3 focus:text-sm focus:text-white"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:z-[110] focus:rounded-full focus:bg-ink focus:px-5 focus:py-3 focus:text-sm focus:text-white focus:start-4"
       >
-        Skip to content
+        {t.nav.skipToContent}
       </a>
 
       <header
@@ -142,16 +160,15 @@ export function Navbar() {
                 scrollTo(0);
               }}
               className="flex items-center gap-3"
-              aria-label={`${profile.name} - back to top`}
+              aria-label={`${t.identity.name} — ${t.nav.backToTopAria}`}
               data-cursor-label="TOP"
             >
               <Logo height={elevated ? 32 : 38} priority />
             </a>
 
             <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
-              {navLinks.map((link) => {
-                const id = link.href.slice(1);
-                const isActive = activeId === id;
+              {t.nav.links.map((link) => {
+                const isActive = activeId === link.href.slice(1);
                 return (
                   <a
                     key={link.href}
@@ -178,6 +195,8 @@ export function Navbar() {
             </nav>
 
             <div className="flex items-center gap-2">
+              <span className="hidden lg:inline-block">{languageSwitch}</span>
+
               <MagneticButton className="hidden sm:inline-block">
                 <a
                   href="#contact"
@@ -188,7 +207,7 @@ export function Navbar() {
                   data-cursor-label="TALK"
                   className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[0.875rem] font-medium text-white transition-colors duration-500 ease-editorial hover:bg-accent-deep"
                 >
-                  Let&rsquo;s Talk
+                  {t.nav.cta}
                   <span aria-hidden="true" className="text-accent">
                     &#9679;
                   </span>
@@ -203,15 +222,15 @@ export function Navbar() {
                 aria-controls="mobile-menu"
                 className="relative z-[102] flex h-11 w-11 items-center justify-center rounded-full border border-rule-strong lg:hidden"
               >
-                <span className="sr-only">{open ? 'Close menu' : 'Open menu'}</span>
+                <span className="sr-only">{open ? t.nav.closeMenu : t.nav.openMenu}</span>
                 <span aria-hidden="true" className="flex h-3 w-5 flex-col justify-between">
                   <span
-                    className={`block h-px w-full bg-ink transition-transform duration-400 ease-editorial ${
+                    className={`block h-px w-full bg-ink transition-transform duration-500 ease-editorial ${
                       open ? 'translate-y-[5.5px] rotate-45' : ''
                     }`}
                   />
                   <span
-                    className={`block h-px w-full bg-ink transition-transform duration-400 ease-editorial ${
+                    className={`block h-px w-full bg-ink transition-transform duration-500 ease-editorial ${
                       open ? '-translate-y-[5.5px] -rotate-45' : ''
                     }`}
                   />
@@ -231,7 +250,7 @@ export function Navbar() {
         aria-hidden={!open}
       >
         <nav aria-label="Mobile" className="flex flex-col">
-          {navLinks.map((link, i) => (
+          {t.nav.links.map((link) => (
             <a
               key={link.href}
               data-menu-item
@@ -241,11 +260,8 @@ export function Navbar() {
                 e.preventDefault();
                 go(link.href);
               }}
-              className="flex items-baseline gap-4 border-b border-rule py-5 text-[clamp(2rem,9vw,3rem)] font-medium leading-none tracking-[-0.04em]"
+              className="block border-b border-rule py-5 text-[clamp(2rem,9vw,3rem)] font-medium leading-none tracking-[-0.04em]"
             >
-              <span className="label numeral text-ink-faint">
-                {String(i + 1).padStart(2, '0')}
-              </span>
               {link.label}
             </a>
           ))}
@@ -261,12 +277,16 @@ export function Navbar() {
             }}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-4 text-base font-medium text-white"
           >
-            Let&rsquo;s Talk
+            {t.nav.cta}
             <span aria-hidden="true" className="text-accent">
               &#9679;
             </span>
           </a>
-          <p className="label">{profile.role}</p>
+
+          <div className="flex items-center justify-between gap-4">
+            <p className="label">{t.identity.role}</p>
+            {languageSwitch}
+          </div>
         </div>
       </div>
     </>

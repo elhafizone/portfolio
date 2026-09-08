@@ -48,22 +48,38 @@ The profile is listed under محمد الكمالي, one of Mohammed’s two fam
 The ratings panel says so beneath the verify link — see "Two family names, one
 person" below.
 
-### 3. `data/projects.ts` — the important one
+### 3. `data/projects.ts` — already done
 
-There are **four placeholder project slots**, each with `isPlaceholder: true`.
-The UI marks them honestly ("Reserved slot", "Awaiting case study") and shows a
-standing notice that these are not published client work.
+Nine live client sites are published, each linking to the real site:
 
-To publish a real project:
+| # | Project | Sector | Stack |
+| --- | --- | --- | --- |
+| 01 | Haboob (هبوب) | Fragrance brand | WordPress, Elementor, Arabic RTL |
+| 02 | Dr. Helmi's Dental Centre | Dental clinic, Dubai | WordPress, Elementor |
+| 03 | Akram Abubakr (أكرم أبوبكر) | Law practice | WordPress, Elementor, Fluent Forms |
+| 04 | Tebra (تبرا) | Corporate services, KSA | WordPress, Elementor, Fluent Forms |
+| 05 | Eng. Mahmoud Hassan | Personal brand | WordPress, WooCommerce, Elementor |
+| 06 | Pets Veterinary Clinic | Vet clinic, Doha | WordPress, WooCommerce, **Amelia**, Elementor |
+| 07 | Sahara Azl (صحاري عزل) | Industrial B2B, KSA | WordPress, Elementor, Arabic RTL |
+| 08 | Sakhr for Specialized Contracting | Contracting | WordPress, WooCommerce, Elementor |
+| 09 | Si Austral | Events & attractions, AU | WordPress, Elementor, Fluent Forms |
 
-1. Put the image in `public/work/` at the size given in section 4.
-2. Fill in `title`, `category`, `year`, `description`, `technologies`, `image`,
-   `imageAlt`, and `url` / `caseStudyUrl`.
-3. Set `isPlaceholder: false`.
+Pets Veterinary Clinic is the live proof for **Amelia**, which the Tools section
+claims — worth keeping in the set for that reason alone.
 
-The "reserved slot" labelling disappears automatically. **Do not flip
-`isPlaceholder` to `false` on an entry whose copy is still invented** — the flag
-is the only thing keeping the section truthful.
+`technologies` were read from each site's actual markup, not assumed. Haboob is
+Elementor **without** WooCommerce, so it is not described as a store.
+
+`year` is `'—'` on every entry: launch dates were never supplied, and a
+plausible-looking year would be an invented fact. Fill them in when known.
+
+Screenshots in `public/work/` were captured through a third-party screenshot
+service at one viewport (1600×1067 @2x), cropped to the top 3:2 slice and
+encoded to WebP. Replace any of them with your own export at 1800×1200 and
+nothing else needs changing.
+
+**Do not set `isPlaceholder: false` on an entry whose copy is still invented** —
+that flag is the only thing keeping this section truthful.
 
 ### 4. Images to prepare
 
@@ -71,28 +87,23 @@ is the only thing keeping the section truthful.
 placeholder in the live page** stating its own required size, so the site itself
 is the brief.
 
+Project screenshots are done. **Three images are still outstanding:**
+
 | # | What | Size (px) | Ratio | Save as | Wire up in |
 |---|---|---|---|---|---|
 | 01 | Hero visual (beside the headline) | 1400 × 1400 | 1:1 | `public/hero/hero-visual.webp` | `data/images.ts` → `heroImage` + `heroImageAlt` |
-| 02 | WordPress business website | 1800 × 1200 | 3:2 | `public/work/project-01.webp` | `data/projects.ts` → `projects[0].image` |
-| 03 | WooCommerce store | 1800 × 1200 | 3:2 | `public/work/project-02.webp` | `projects[1].image` |
-| 04 | Brand / visual identity | 1800 × 1200 | 3:2 | `public/work/project-03.webp` | `projects[2].image` |
-| 05 | Booking / service website | 1800 × 1200 | 3:2 | `public/work/project-04.webp` | `projects[3].image` |
-| 06 | Portrait of Mohammed | 1200 × 1500 | 4:5 | `public/about/portrait.webp` | `data/profile.ts` → `profile.portrait` |
-| 07 | Social share card | 1200 × 630 | 1.91:1 | `public/og.jpg` | `data/images.ts` → `ogImage` |
+| 02 | Portrait of Mohammed | 1200 × 1500 | 4:5 | `public/about/portrait.webp` | `data/profile.ts` → `profile.portrait` |
+| 03 | Social share card | 1200 × 630 | 1.91:1 | `public/og.jpg` | `data/images.ts` → `ogImage` |
 
-Slot 01 is the most important one — it is the first thing a visitor sees and it
+Slot 01 is the most important — it is the first thing a visitor sees, and it
 carries the hero on its own now that the 3D object has been removed.
 
 Sizes are 2× the largest display size, so they stay sharp on retina screens.
 Next.js generates the smaller responsive variants and the AVIF/WebP encodings
 automatically — supply one high-quality source per slot.
 
-Slots 02–05 share one aspect ratio deliberately: the same file serves both the
-desktop horizontal rail and the stacked mobile card, with no second crop.
-
-Remember to set `imageAlt` alongside `image` — an empty alt on a project shot is
-an accessibility regression.
+Remember to set `imageAlt` alongside any new `image` — an empty alt on a project
+shot is an accessibility regression.
 
 ### 5. Contact form delivery
 
@@ -130,7 +141,8 @@ Al-Hafiz. Deliberately **not** present anywhere in this codebase:
 
 - employer names, job titles at named companies, or employment dates
 - degrees, certifications or awards
-- client names, logos, revenue figures or project result metrics
+- revenue figures or project result metrics (the six published projects link
+  to the live sites instead of claiming outcomes)
 - a fabricated portrait (the About section uses a typographic identity plate
   instead; set `profile.portrait` to swap in a real photograph)
 - invented or paraphrased review text presented as a quotation

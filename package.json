@@ -2,10 +2,15 @@
   "name": "mohammed-alhafiz-portfolio",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "build:prod": "next build",
+    "start:prod": "next start -p 3211",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },

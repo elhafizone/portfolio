@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 
+import { useLocale } from '@/components/i18n/LocaleProvider';
 import { Button } from '@/components/ui/Button';
 import { formConfig } from '@/config/site';
 import { budgetRanges, projectTypes } from '@/data/social';
@@ -15,21 +16,33 @@ import {
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
 const fieldBase =
-  'w-full border-b border-rule bg-transparent py-3 text-[1.0625rem] tracking-[-0.015em] text-ink outline-none transition-colors duration-300 placeholder:text-ink-faint focus:border-accent';
+  'w-full border-b border-rule bg-transparent py-3 text-[1.0625rem] text-ink outline-none transition-colors duration-300 placeholder:text-ink-faint focus:border-accent';
 
 export function ContactForm() {
+  const { t, fill } = useLocale();
   const [values, setValues] = useState<ContactPayload>(initialContactValues);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<Status>('idle');
   const [formError, setFormError] = useState('');
   const statusRef = useRef<HTMLParagraphElement>(null);
 
+  /** Turns a validation code into a sentence in the reader's language. */
+  const messageFor = useCallback(
+    (field: keyof ContactPayload): string | undefined => {
+      const code = errors[field];
+      if (!code) return undefined;
+      const text = t.form.errors[code];
+      return code === 'messageLong'
+        ? fill(text, { max: formConfig.maxMessageLength })
+        : text;
+    },
+    [errors, t, fill]
+  );
+
   const update = useCallback(
     (field: keyof ContactPayload) =>
       (
-        event: React.ChangeEvent<
-          HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-        >
+        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
       ) => {
         const value = event.target.value;
         setValues((prev) => ({ ...prev, [field]: value }));
@@ -47,7 +60,6 @@ export function ContactForm() {
       if (Object.keys(nextErrors).length > 0) {
         setErrors(nextErrors);
         setStatus('error');
-        // Move focus to the first field with a problem.
         const first = Object.keys(nextErrors)[0];
         document.getElementById(`contact-${first}`)?.focus();
         return;
@@ -64,14 +76,14 @@ export function ContactForm() {
 
         const data = (await response.json().catch(() => ({}))) as {
           errors?: FieldErrors;
-          error?: string;
+          code?: keyof typeof t.form.errors;
         };
 
         if (!response.ok) {
           if (data.errors) setErrors(data.errors);
-          setFormError(
-            data.error ?? 'Something went wrong sending your message. Please try again.'
-          );
+          // The server answers with a code so the message can be rendered in
+          // whichever language the visitor is actually reading.
+          setFormError((data.code && t.form.errors[data.code]) || t.form.errors.generic);
           setStatus('error');
           statusRef.current?.focus();
           return;
@@ -82,32 +94,28 @@ export function ContactForm() {
         setStatus('success');
         statusRef.current?.focus();
       } catch {
-        setFormError(
-          'Could not reach the server. Please check your connection and try again.'
-        );
+        setFormError(t.form.errors.network);
         setStatus('error');
         statusRef.current?.focus();
       }
     },
-    [values]
+    [values, t]
   );
 
   if (status === 'success') {
     return (
       <div className="border-t border-accent pt-8">
-        <p className="label label--accent">Message sent</p>
-        <p className="mt-5 text-[clamp(1.5rem,3vw,2.25rem)] font-medium leading-[1.1] tracking-[-0.035em]">
-          Thank you &mdash; your message is on its way.
+        <p className="label label--accent">{t.form.successLabel}</p>
+        <p className="mt-5 text-[clamp(1.5rem,3vw,2.25rem)] font-medium leading-[1.1]">
+          {t.form.successTitle}
         </p>
-        <p className="mt-4 max-w-md text-ink-mute">
-          I read every enquiry personally and will reply as soon as I can.
-        </p>
+        <p className="mt-4 max-w-md text-ink-body">{t.form.successBody}</p>
         <button
           type="button"
           onClick={() => setStatus('idle')}
           className="label link-underline mt-8 text-accent-ink"
         >
-          Send another message
+          {t.form.sendAnother}
         </button>
       </div>
     );
@@ -130,143 +138,129 @@ export function ContactForm() {
       </div>
 
       <div className="grid gap-x-10 gap-y-7 sm:grid-cols-2">
-        <Field
-          id="contact-name"
-          label="Name"
-          required
-          error={errors.name}
-          input={
-            <input
-              id="contact-name"
-              name="name"
-              type="text"
-              autoComplete="name"
-              className={fieldBase}
-              placeholder="Your full name"
-              value={values.name}
-              onChange={update('name')}
-              aria-invalid={Boolean(errors.name)}
-              aria-describedby={errors.name ? 'contact-name-error' : undefined}
-            />
-          }
-        />
+        <Field id="contact-name" label={t.form.name} required error={messageFor('name')}>
+          <input
+            id="contact-name"
+            name="name"
+            type="text"
+            autoComplete="name"
+            className={fieldBase}
+            placeholder={t.form.namePlaceholder}
+            value={values.name}
+            onChange={update('name')}
+            aria-invalid={Boolean(errors.name)}
+            aria-describedby={errors.name ? 'contact-name-error' : undefined}
+          />
+        </Field>
 
-        <Field
-          id="contact-email"
-          label="Email"
-          required
-          error={errors.email}
-          input={
-            <input
-              id="contact-email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              className={fieldBase}
-              placeholder="you@company.com"
-              value={values.email}
-              onChange={update('email')}
-              aria-invalid={Boolean(errors.email)}
-              aria-describedby={errors.email ? 'contact-email-error' : undefined}
-            />
-          }
-        />
+        <Field id="contact-email" label={t.form.email} required error={messageFor('email')}>
+          <input
+            id="contact-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            dir="ltr"
+            className={fieldBase}
+            placeholder={t.form.emailPlaceholder}
+            value={values.email}
+            onChange={update('email')}
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? 'contact-email-error' : undefined}
+          />
+        </Field>
 
         <Field
           id="contact-phone"
-          label="Phone"
-          hint="Optional"
-          error={errors.phone}
-          input={
-            <input
-              id="contact-phone"
-              name="phone"
-              type="tel"
-              autoComplete="tel"
-              className={fieldBase}
-              placeholder="+000 000 0000"
-              value={values.phone}
-              onChange={update('phone')}
-              aria-invalid={Boolean(errors.phone)}
-              aria-describedby={errors.phone ? 'contact-phone-error' : undefined}
-            />
-          }
-        />
+          label={t.form.phone}
+          hint={t.form.optional}
+          error={messageFor('phone')}
+        >
+          <input
+            id="contact-phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            dir="ltr"
+            className={fieldBase}
+            placeholder={t.form.phonePlaceholder}
+            value={values.phone}
+            onChange={update('phone')}
+            aria-invalid={Boolean(errors.phone)}
+            aria-describedby={errors.phone ? 'contact-phone-error' : undefined}
+          />
+        </Field>
 
         <Field
           id="contact-projectType"
-          label="Project type"
+          label={t.form.projectType}
           required
-          error={errors.projectType}
-          input={
-            <select
-              id="contact-projectType"
-              name="projectType"
-              className={`${fieldBase} appearance-none`}
-              value={values.projectType}
-              onChange={update('projectType')}
-              aria-invalid={Boolean(errors.projectType)}
-              aria-describedby={
-                errors.projectType ? 'contact-projectType-error' : undefined
-              }
-            >
-              <option value="">Select an option</option>
-              {projectTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          }
-        />
+          error={messageFor('projectType')}
+        >
+          <select
+            id="contact-projectType"
+            name="projectType"
+            className={`${fieldBase} appearance-none`}
+            value={values.projectType}
+            onChange={update('projectType')}
+            aria-invalid={Boolean(errors.projectType)}
+            aria-describedby={errors.projectType ? 'contact-projectType-error' : undefined}
+          >
+            <option value="">{t.form.selectOption}</option>
+            {/* The value submitted is the canonical English one; only the label
+                is translated, so the inbox and validation stay language-neutral. */}
+            {projectTypes.map((type, i) => (
+              <option key={type} value={type}>
+                {t.form.projectTypes[i]}
+              </option>
+            ))}
+          </select>
+        </Field>
 
         <Field
           id="contact-budget"
-          label="Budget"
-          hint="Optional"
-          error={errors.budget}
-          input={
-            <select
-              id="contact-budget"
-              name="budget"
-              className={`${fieldBase} appearance-none`}
-              value={values.budget}
-              onChange={update('budget')}
-              aria-invalid={Boolean(errors.budget)}
-              aria-describedby={errors.budget ? 'contact-budget-error' : undefined}
-            >
-              <option value="">Prefer not to say</option>
-              {budgetRanges.map((range) => (
-                <option key={range} value={range}>
-                  {range}
-                </option>
-              ))}
-            </select>
-          }
-        />
+          label={t.form.budget}
+          hint={t.form.optional}
+          error={messageFor('budget')}
+        >
+          <select
+            id="contact-budget"
+            name="budget"
+            className={`${fieldBase} appearance-none`}
+            value={values.budget}
+            onChange={update('budget')}
+            aria-invalid={Boolean(errors.budget)}
+            aria-describedby={errors.budget ? 'contact-budget-error' : undefined}
+          >
+            <option value="">{t.form.preferNotToSay}</option>
+            {budgetRanges.map((range, i) => (
+              <option key={range} value={range}>
+                {t.form.budgetRanges[i]}
+              </option>
+            ))}
+          </select>
+        </Field>
 
         <div className="sm:col-span-2">
           <Field
             id="contact-message"
-            label="Message"
+            label={t.form.message}
             required
             hint={`${values.message.length} / ${formConfig.maxMessageLength}`}
-            error={errors.message}
-            input={
-              <textarea
-                id="contact-message"
-                name="message"
-                rows={4}
-                className={`${fieldBase} resize-y`}
-                placeholder="What are you building, and what does it need to do?"
-                maxLength={formConfig.maxMessageLength}
-                value={values.message}
-                onChange={update('message')}
-                aria-invalid={Boolean(errors.message)}
-                aria-describedby={errors.message ? 'contact-message-error' : undefined}
-              />
-            }
-          />
+            error={messageFor('message')}
+          >
+            <textarea
+              id="contact-message"
+              name="message"
+              rows={4}
+              className={`${fieldBase} resize-y`}
+              placeholder={t.form.messagePlaceholder}
+              maxLength={formConfig.maxMessageLength}
+              value={values.message}
+              onChange={update('message')}
+              aria-invalid={Boolean(errors.message)}
+              aria-describedby={errors.message ? 'contact-message-error' : undefined}
+            />
+          </Field>
         </div>
       </div>
 
@@ -278,7 +272,7 @@ export function ContactForm() {
           {...(status === 'submitting' ? { disabled: true } : {})}
           className={status === 'submitting' ? 'pointer-events-none opacity-60' : ''}
         >
-          {status === 'submitting' ? 'Sending' : 'Start a Conversation'}
+          {status === 'submitting' ? t.form.submitting : t.form.submit}
         </Button>
 
         <p
@@ -287,10 +281,10 @@ export function ContactForm() {
           role="status"
           aria-live="polite"
           className={`max-w-sm text-sm leading-relaxed outline-none ${
-            formError ? 'text-accent-deep' : 'text-ink-mute'
+            formError ? 'text-accent-deep' : 'text-ink-body'
           }`}
         >
-          {formError || 'Usually a reply within one working day.'}
+          {formError || t.form.replyNote}
         </p>
       </div>
     </form>
@@ -300,14 +294,14 @@ export function ContactForm() {
 function Field({
   id,
   label,
-  input,
+  children,
   error,
   hint,
   required,
 }: {
   id: string;
   label: string;
-  input: React.ReactNode;
+  children: React.ReactNode;
   error?: string;
   hint?: string;
   required?: boolean;
@@ -318,7 +312,7 @@ function Field({
         <label htmlFor={id} className="label">
           {label}
           {required && (
-            <span aria-hidden="true" className="ml-1 text-accent">
+            <span aria-hidden="true" className="text-accent ms-1">
               *
             </span>
           )}
@@ -326,7 +320,7 @@ function Field({
         {hint && <span className="label text-ink-faint">{hint}</span>}
       </div>
 
-      <div className="mt-1">{input}</div>
+      <div className="mt-1">{children}</div>
 
       {error && (
         <p id={`${id}-error`} className="mt-2 text-sm text-accent-deep">

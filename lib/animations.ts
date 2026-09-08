@@ -105,13 +105,7 @@ export function createHeroTimeline(root: Root, opts: { reduced: boolean }) {
       { opacity: 1, y: 0, duration: DURATION.base, stagger: STAGGER.items },
       '-=0.5'
     )
-    .to(q('[data-hero="stats"] [data-fade]'), { opacity: 1, stagger: 0.06 }, '-=0.6')
-    .fromTo(
-      q('[data-hero="visual"]'),
-      { opacity: 0, scale: 0.94 },
-      { opacity: 1, scale: 1, duration: DURATION.slow, ease: EASE.out },
-      '-=0.95'
-    );
+    .to(q('[data-hero="stats"] [data-fade]'), { opacity: 1, stagger: 0.06 }, '-=0.6');
 
   return tl;
 }
@@ -145,7 +139,6 @@ export function createHeroScrollTransition(root: Root, opts: { reduced: boolean 
       })
       .to(q('[data-hero-layer="headline"]'), { yPercent: -14, scale: 0.94, opacity: 0.15 }, 0)
       .to(q('[data-hero-layer="copy"]'), { yPercent: -34, opacity: 0 }, 0)
-      .to(q('[data-hero-layer="visual"]'), { yPercent: -8, scale: 1.06, opacity: 0.35 }, 0)
       .to(q('[data-hero-layer="baseline"]'), { opacity: 0 }, 0);
   });
 
@@ -326,6 +319,8 @@ export function createHorizontalProjects(
   root: Root,
   opts: {
     reduced: boolean;
+    /** Reverses the travel so the rail reads right-to-left in Arabic. */
+    rtl?: boolean;
     runway: HTMLElement | null;
     track: HTMLElement | null;
     progressBar: HTMLElement | null;
@@ -349,8 +344,93 @@ export function createHorizontalProjects(
     const resize = sizeRunway(runway, () => distance() + window.innerHeight * SCROLL.horizontalPadding);
     ScrollTrigger.addEventListener('refreshInit', resize);
 
-    const tween = gsap.to(track, {
-      x: () => -distance(),
+    // In RTL the overflow extends to the left, so the track travels the
+    // other way: the gallery starts at the right edge, as Arabic reads.
+    const sign = opts.rtl ? 1 : -1;
+
+    /*
+      Depth pass.
+
+      This used to be two `containerAnimation` ScrollTriggers per panel. That
+      technique assumes the container travels in the NEGATIVE x direction — the
+      only direction a left-to-right rail moves. In RTL the track tweens to
+      `x: +distance`, so `start: 'left right'` never resolved into a progressing
+      range and every panel stayed frozen at its from-state, which read on the
+      page as a translucent sheet lying over the whole Arabic section.
+
+      So position is measured instead of inferred. Each panel's offset inside
+      the track is captured once per refresh; the paint below derives where that
+      panel currently sits on screen from the track's own x. No assumption about
+      travel direction survives, and LTR and RTL run the identical code path.
+    */
+    type PanelGeom = {
+      off: number;
+      w: number;
+      media: HTMLElement | null;
+      meta: HTMLElement | null;
+    };
+    let geom: PanelGeom[] = [];
+    /** Where the track sits with x = 0. */
+    let originX = 0;
+
+    const trackX = () => (gsap.getProperty(track, 'x') as number) || 0;
+
+    const measure = () => {
+      const x = trackX();
+      const trackLeft = track.getBoundingClientRect().left;
+      originX = trackLeft - x;
+      geom = panels.map((panel) => {
+        const r = panel.getBoundingClientRect();
+        return {
+          off: r.left - trackLeft,
+          w: r.width,
+          media: panel.querySelector<HTMLElement>('[data-project-media]'),
+          meta: panel.querySelector<HTMLElement>('[data-project-meta]'),
+        };
+      });
+    };
+
+    /** Entering edge: panels arrive from the right in LTR, the left in RTL. */
+    const enterSide = opts.rtl ? -1 : 1;
+
+    /*
+      NO OPACITY IS APPLIED TO THE TEXT. Do not reintroduce it.
+
+      The rail used to fade each panel's text from 0.45 up to 1 as it travelled
+      towards the centre. Two things were wrong with that:
+
+        - Only one panel is ever near the centre, so at any given moment most
+          project names on screen were sitting at 45% — which is simply a pale
+          project name, whatever the intent behind it.
+        - The rail stops at `scrollWidth - innerWidth`, so the LAST panel never
+          reaches the centre at all and could never finish fading in.
+
+      Depth now comes from the horizontal drift alone, which costs the text
+      nothing in legibility.
+    */
+    const paint = () => {
+      const x = trackX();
+      const half = window.innerWidth / 2;
+      for (const g of geom) {
+        // -1 = hard against the left edge, 0 = centred, +1 = against the right.
+        const s = gsap.utils.clamp(-1, 1, (originX + x + g.off + g.w / 2 - half) / (half + g.w / 2));
+
+        // Imagery drifts with screen position, so it counter-moves the travel
+        // in whichever direction the rail happens to run.
+        if (g.media) gsap.set(g.media, { xPercent: 6 * s });
+
+        // Typography drifts against the imagery, at a third of the distance.
+        if (g.meta) gsap.set(g.meta, { xPercent: enterSide * -2 * s });
+      }
+    };
+
+    const remeasure = () => {
+      measure();
+      paint();
+    };
+
+    gsap.to(track, {
+      x: () => sign * distance(),
       ease: 'none',
       scrollTrigger: {
         trigger: runway,
@@ -358,57 +438,26 @@ export function createHorizontalProjects(
         end: 'bottom bottom',
         scrub: 0.8,
         invalidateOnRefresh: true,
+        onRefresh: remeasure,
         onUpdate: (self) => {
           if (opts.progressBar) gsap.set(opts.progressBar, { scaleX: self.progress });
           opts.onIndexChange?.(stepFromProgress(self.progress, panels.length));
+          paint();
         },
       },
     });
 
-    // Depth: imagery drifts against the typography as the track travels.
-    panels.forEach((panel) => {
-      const media = panel.querySelector('[data-project-media]');
-      const meta = panel.querySelector('[data-project-meta]');
-      if (media) {
-        gsap.fromTo(
-          media,
-          { xPercent: 6 },
-          {
-            xPercent: -6,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: panel,
-              containerAnimation: tween,
-              start: 'left right',
-              end: 'right left',
-              scrub: true,
-            },
-          }
-        );
-      }
-      if (meta) {
-        gsap.fromTo(
-          meta,
-          { xPercent: -3, opacity: 0.45 },
-          {
-            xPercent: 3,
-            opacity: 1,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: panel,
-              containerAnimation: tween,
-              start: 'left right',
-              end: 'center center',
-              scrub: true,
-            },
-          }
-        );
-      }
-    });
+    remeasure();
 
     return () => {
       ScrollTrigger.removeEventListener('refreshInit', resize);
       runway.style.height = '';
+      // These are painted from a scroll callback, so the context that owns this
+      // scene never recorded them and cannot revert them for us.
+      geom.forEach((g) => {
+        if (g.media) gsap.set(g.media, { clearProps: 'transform' });
+        if (g.meta) gsap.set(g.meta, { clearProps: 'transform' });
+      });
     };
   });
 
@@ -503,51 +552,6 @@ export function createProcessTimeline(
     onChange: opts.onChange,
     onProgress: (p) => {
       if (opts.line) gsap.set(opts.line, { scaleX: p });
-    },
-  });
-}
-
-/** Testimonials: editorial reader, one entry at a time. */
-export function createTestimonialsTimeline(
-  runway: HTMLElement | null,
-  opts: { reduced: boolean; count: number; onChange: (index: number) => void }
-) {
-  return createSteppedScene(runway, {
-    reduced: opts.reduced,
-    count: opts.count,
-    stepFactor: SCROLL.testimonialPerItem,
-    onChange: opts.onChange,
-  });
-}
-
-/* -------------------------------------------------------------------------- */
-/* COUNTERS                                                                    */
-/* -------------------------------------------------------------------------- */
-
-/** Counts a numeric stat up on entry. Falls back to the final value instantly. */
-export function createCounter(
-  el: HTMLElement | null,
-  value: number,
-  opts: { reduced: boolean; decimals?: number; suffix?: string }
-) {
-  if (!el) return;
-  const decimals = opts.decimals ?? 0;
-  const suffix = opts.suffix ?? '';
-
-  if (opts.reduced) {
-    el.textContent = value.toFixed(decimals) + suffix;
-    return;
-  }
-
-  registerGsap();
-  const state = { n: 0 };
-  gsap.to(state, {
-    n: value,
-    duration: DURATION.slow,
-    ease: EASE.out,
-    scrollTrigger: { trigger: el, start: 'top 92%', toggleActions: 'play none none none' },
-    onUpdate: () => {
-      el.textContent = state.n.toFixed(decimals) + suffix;
     },
   });
 }

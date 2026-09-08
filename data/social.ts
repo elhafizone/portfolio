@@ -1,10 +1,20 @@
 import { contactConfig } from '@/config/site';
 
+/** Ids are stable keys; the visible wording comes from the dictionaries. */
+export type SocialId = 'email' | 'whatsapp' | 'linkedin' | 'behance';
+
 export type SocialLink = {
-  id: string;
-  label: string;
+  id: SocialId;
   href: string;
-  handleLabel: string;
+  /**
+   * A literal value to print beside the label — an address, a handle. Null when
+   * there is nothing literal to show and the localised hint is used instead.
+   *
+   * This is the split that matters: an email address is the same string in
+   * every language, "Message directly" is not. Returning an English label here
+   * is what previously put `WhatsApp / Message directly` on the Arabic page.
+   */
+  handle: string | null;
 };
 
 /**
@@ -17,62 +27,37 @@ export function getSocialLinks(): SocialLink[] {
   if (contactConfig.email) {
     links.push({
       id: 'email',
-      label: 'Email',
       href: `mailto:${contactConfig.email}`,
-      handleLabel: contactConfig.email,
+      handle: contactConfig.email,
     });
   }
   if (contactConfig.whatsapp) {
     links.push({
       id: 'whatsapp',
-      label: 'WhatsApp',
+      // wa.me takes digits only: country code first, no plus, no spaces.
       href: `https://wa.me/${contactConfig.whatsapp.replace(/\D/g, '')}`,
-      handleLabel: 'Message directly',
+      handle: null,
     });
   }
   if (contactConfig.linkedin) {
-    links.push({
-      id: 'linkedin',
-      label: 'LinkedIn',
-      href: contactConfig.linkedin,
-      handleLabel: 'Professional profile',
-    });
-  }
-  if (contactConfig.mostaql) {
-    links.push({
-      id: 'mostaql',
-      label: 'Mostaql',
-      href: contactConfig.mostaql,
-      handleLabel: 'Client ratings',
-    });
+    links.push({ id: 'linkedin', href: contactConfig.linkedin, handle: null });
   }
   if (contactConfig.behance) {
-    links.push({
-      id: 'behance',
-      label: 'Portfolio',
-      href: contactConfig.behance,
-      handleLabel: 'More work',
-    });
+    links.push({ id: 'behance', href: contactConfig.behance, handle: null });
   }
 
   return links;
 }
 
-export const contactCopy = {
-  eyebrow: 'Contact',
-  title: 'Have a Project in Mind?',
-  intro:
-    "Let's turn your idea into a clear, modern, and effective digital experience.",
-  cta: 'Start a Conversation',
-  unconfiguredNotice:
-    'Contact channels are not published yet — use the form and the message will reach the configured inbox.',
-} as const;
-
+/**
+ * Canonical option values. These are what the form SUBMITS and what the API
+ * validates against, so they stay in one language regardless of what the
+ * visitor sees - the labels are translated in the dictionaries.
+ */
 export const projectTypes = [
   'Website Design',
   'WordPress',
   'WooCommerce',
-  'Branding',
   'Graphic Design',
   'Other',
 ] as const;

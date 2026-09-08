@@ -15,3 +15,6 @@ tsconfig.tsbuildinfo
 # Editor / local tooling
 .claude/
 .vscode/
+
+# Production build output, kept separate from the dev server's .next
+.next-prod

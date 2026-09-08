@@ -20,7 +20,9 @@ export const dynamic = 'force-dynamic';
  * actually delivered.
  */
 
-type DeliveryResult = { ok: true } | { ok: false; status: number; error: string };
+/** The route answers with a CODE; the client renders it in the reader's
+ *  language. A bilingual site must not have its server pick the language. */
+type DeliveryResult = { ok: true } | { ok: false; status: number; code: string };
 
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
 const WINDOW_MS = 10 * 60 * 1000;
@@ -59,56 +61,66 @@ async function deliver(payload: ContactPayload): Promise<DeliveryResult> {
   const to = process.env.CONTACT_TO_EMAIL;
   const from = process.env.CONTACT_FROM_EMAIL ?? 'onboarding@resend.dev';
 
-  if (resendKey && to) {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        reply_to: payload.email,
-        subject: `New enquiry - ${payload.projectType} - ${payload.name}`,
-        text: renderEmail(payload),
-      }),
-    });
+  /*
+    Both branches below catch their own network failures.
 
-    if (!response.ok) {
-      return {
-        ok: false,
-        status: 502,
-        error: 'The message could not be delivered. Please try again shortly.',
-      };
+    `fetch` REJECTS on a DNS failure, a dropped connection or a timeout — it
+    does not return a non-ok response. Without the catch, that rejection
+    propagated out of the route and Next answered with a bare 500, so a visitor
+    hit an unhandled server error instead of "could not be delivered, try
+    again". A provider outage is an expected condition here, not a crash.
+  */
+  if (resendKey && to) {
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from,
+          to: [to],
+          reply_to: payload.email,
+          subject: `New enquiry - ${payload.projectType} - ${payload.name}`,
+          text: renderEmail(payload),
+        }),
+      });
+
+      if (!response.ok) {
+        // The body carries Resend's reason - an unverified sending domain, a
+        // revoked key. Server-side only; the visitor gets a code.
+        console.error('[contact] Resend rejected the message:', response.status, await response.text());
+        return { ok: false, status: 502, code: 'deliveryFailed' };
+      }
+      return { ok: true };
+    } catch (error) {
+      console.error('[contact] Could not reach Resend:', error);
+      return { ok: false, status: 502, code: 'deliveryFailed' };
     }
-    return { ok: true };
   }
 
   const webhook = process.env.CONTACT_WEBHOOK_URL;
   if (webhook) {
-    const response = await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const response = await fetch(webhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    if (!response.ok) {
-      return {
-        ok: false,
-        status: 502,
-        error: 'The message could not be delivered. Please try again shortly.',
-      };
+      if (!response.ok) {
+        console.error('[contact] Webhook rejected the message:', response.status);
+        return { ok: false, status: 502, code: 'deliveryFailed' };
+      }
+      return { ok: true };
+    } catch (error) {
+      console.error('[contact] Could not reach the webhook:', error);
+      return { ok: false, status: 502, code: 'deliveryFailed' };
     }
-    return { ok: true };
   }
 
-  return {
-    ok: false,
-    status: 501,
-    error:
-      'The contact form is not connected to an inbox yet. Please reach out through one of the listed channels.',
-  };
+  return { ok: false, status: 501, code: 'notConfigured' };
 }
 
 export async function POST(request: Request) {
@@ -117,7 +129,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+    return NextResponse.json({ code: 'invalidBody' }, { status: 400 });
   }
 
   // Honeypot: silently accept so bots do not learn they were caught, but do
@@ -137,10 +149,7 @@ export async function POST(request: Request) {
     'unknown';
 
   if (!checkRate(ip)) {
-    return NextResponse.json(
-      { error: 'Too many messages sent. Please try again a little later.' },
-      { status: 429 }
-    );
+    return NextResponse.json({ code: 'rateLimited' }, { status: 429 });
   }
 
   const payload: ContactPayload = {
@@ -155,7 +164,7 @@ export async function POST(request: Request) {
   const result = await deliver(payload);
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
+    return NextResponse.json({ code: result.code }, { status: result.status });
   }
 
   return NextResponse.json({ ok: true }, { status: 200 });

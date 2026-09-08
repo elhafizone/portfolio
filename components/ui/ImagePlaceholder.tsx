@@ -59,7 +59,7 @@ export function ImagePlaceholder({ slot, width, height, ratio, hint, className =
 
       <span
         aria-hidden="true"
-        className="label absolute left-4 top-4 flex items-center gap-2 text-[0.5625rem] text-ink-mute"
+        className="label absolute top-4 flex items-center gap-2 text-[0.5625rem] text-ink-mute start-4"
       >
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
         Image {number}
@@ -67,14 +67,14 @@ export function ImagePlaceholder({ slot, width, height, ratio, hint, className =
 
       <span
         aria-hidden="true"
-        className="label numeral absolute bottom-4 left-4 text-[0.5625rem] text-ink-mute"
+        className="label numeral absolute bottom-4 text-[0.5625rem] text-ink-mute start-4"
       >
         {formatSize(width, height)}
       </span>
 
       <span
         aria-hidden="true"
-        className="label absolute bottom-4 right-4 text-[0.5625rem] text-ink-faint"
+        className="label absolute bottom-4 text-[0.5625rem] text-ink-faint end-4"
       >
         {ratio}
       </span>

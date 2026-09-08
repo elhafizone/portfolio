@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { useLocale } from '@/components/i18n/LocaleProvider';
 import { useMotion } from '@/components/motion/MotionProvider';
 import { useSectionMotion } from '@/components/motion/useSectionMotion';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { SectionHeading } from '@/components/ui/SectionHeading';
-import { projects, projectsCopy } from '@/data/projects';
+import { projects } from '@/data/projects';
 import { createHorizontalProjects } from '@/lib/animations';
 import { gsap, registerGsap } from '@/lib/gsap';
 
@@ -27,6 +28,7 @@ export function ProjectsSection() {
   const progressRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const { reduced, ready } = useMotion();
+  const { t, isRtl } = useLocale();
 
   // The sticky rail is the ONLY way to reach projects 2-4 on desktop, so when
   // motion is off it must not render at all - the vertical list takes over at
@@ -44,6 +46,7 @@ export function ProjectsSection() {
     const ctx = gsap.context(() => {
       createHorizontalProjects(rail, {
         reduced,
+        rtl: isRtl,
         runway: runwayRef.current,
         track: trackRef.current,
         progressBar: progressRef.current,
@@ -52,25 +55,29 @@ export function ProjectsSection() {
     }, rail);
 
     return () => ctx.revert();
-  }, [reduced, ready]);
+  }, [reduced, ready, isRtl]);
 
   const anyPlaceholder = projects.some((p) => p.isPlaceholder);
 
   return (
     <section ref={rootRef} id="work" className="section" aria-labelledby="work-heading">
       <SectionHeading
-        eyebrow={projectsCopy.eyebrow}
+        eyebrow={t.work.eyebrow}
         titleId="work-heading"
-        index="02"
-        title={['Selected', <span key="w" className="serif-accent">Work</span>]}
-        intro={projectsCopy.intro}
+        title={[
+          t.work.title[0],
+          <span key="w" className="serif-accent">
+            {t.work.title[1]}
+          </span>,
+        ]}
+        intro={t.work.intro}
         aside={
           anyPlaceholder ? (
             <p
               data-fade
-              className="max-w-sm border-l-2 border-accent pl-4 text-sm leading-relaxed text-ink-mute"
+              className="max-w-sm border-s-2 border-accent ps-4 text-sm leading-relaxed text-ink-body"
             >
-              {projectsCopy.placeholderNotice}
+              {t.work.placeholderNotice}
             </p>
           ) : undefined
         }
@@ -79,10 +86,13 @@ export function ProjectsSection() {
       {/* Desktop: sticky horizontal rail */}
       <div ref={railRef} className={`mt-16 ${stageEnabled ? 'hidden lg:block' : 'hidden'}`}>
         <div ref={runwayRef} className="relative">
-          <div className="sticky top-0 flex h-[100svh] flex-col justify-center overflow-hidden">
+          <div className="sticky top-0 flex h-[100svh] flex-col justify-center overflow-hidden pt-[var(--header-h)]">
           <div
             ref={trackRef}
-            className="flex items-start gap-[6vw] pl-[var(--gutter)] pr-[30vw] will-change-transform"
+            /* Trailing padding is breathing room at the end of the rail, not a
+               panel slot. It was sized for four projects; with nine it would be
+               ~1300px of empty horizontal scrolling. */
+            className="flex items-start gap-[6vw] ps-[var(--gutter)] pe-[12vw] will-change-transform"
           >
             {projects.map((project) => (
               <ProjectCard key={project.id} project={project} layout="panel" />
@@ -105,7 +115,9 @@ export function ProjectsSection() {
               <span className="label numeral text-ink-faint">
                 {String(projects.length).padStart(2, '0')}
               </span>
-              <span className="label hidden text-ink-faint xl:inline">Scroll to advance</span>
+              <span className="label hidden text-ink-faint xl:inline">
+                {t.work.scrollToAdvance}
+              </span>
               </div>
             </div>
           </div>

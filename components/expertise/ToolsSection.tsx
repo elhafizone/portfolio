@@ -2,10 +2,10 @@
 
 import { useMemo, useRef, useState } from 'react';
 
+import { useLocale } from '@/components/i18n/LocaleProvider';
 import { useSectionMotion } from '@/components/motion/useSectionMotion';
 import { SectionHeading } from '@/components/ui/SectionHeading';
-import { profile } from '@/data/profile';
-import { tools, toolsCopy } from '@/data/expertise';
+import { tools } from '@/data/expertise';
 
 /**
  * Tools constellation.
@@ -15,9 +15,27 @@ import { tools, toolsCopy } from '@/data/expertise';
  * connector. Below lg it collapses to a grouped list, because a radial diagram
  * on a phone is decoration pretending to be information.
  */
+/**
+ * Rounds a coordinate to two decimals, which is what keeps this component
+ * hydrating cleanly.
+ *
+ * ECMAScript does not require `Math.sin`/`Math.cos` to be bit-identical across
+ * implementations, and they are not: Node rendered one node at
+ * `y = 84.28939561022754` while V8 in the browser computed `...56` for the same
+ * angle. React compares the two as strings, so a difference in the last unit of
+ * least precision is still a hydration mismatch — and the browser's own
+ * serialisation of a long percentage in a `style` attribute widened the gap
+ * further.
+ *
+ * Two decimals is ~0.01% of the container, well under a tenth of a pixel here,
+ * and it absorbs the discrepancy on both sides.
+ */
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 export function ToolsSection() {
   const rootRef = useRef<HTMLElement>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  const { t } = useLocale();
   useSectionMotion(rootRef);
 
   const nodes = useMemo(() => {
@@ -29,8 +47,8 @@ export function ToolsSection() {
       const angle = (i / count) * Math.PI * 2 - Math.PI / 2 + 0.16;
       return {
         ...tool,
-        x: 50 + Math.cos(angle) * rx,
-        y: 50 + Math.sin(angle) * ry,
+        x: round2(50 + Math.cos(angle) * rx),
+        y: round2(50 + Math.sin(angle) * ry),
       };
     });
   }, []);
@@ -47,15 +65,19 @@ export function ToolsSection() {
     <section
       ref={rootRef}
       id="tools"
-      className="section border-t border-rule"
+      className="section"
       aria-labelledby="tools-heading"
     >
       <SectionHeading
-        eyebrow={toolsCopy.eyebrow}
+        eyebrow={t.tools.eyebrow}
         titleId="tools-heading"
-        index="05"
-        title={['What the work is', <span key="b" className="serif-accent">built with.</span>]}
-        intro={toolsCopy.intro}
+        title={[
+          t.tools.title[0],
+          <span key="b" className="serif-accent">
+            {t.tools.title[1]}
+          </span>,
+        ]}
+        intro={t.tools.intro}
       />
 
       {/* Desktop: radial constellation */}
@@ -98,12 +120,12 @@ export function ToolsSection() {
 
           {/* centre */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-            <span className="label label--accent">Centre</span>
+            <span className="label label--accent">{t.tools.centreLabel}</span>
             <p className="mt-2 whitespace-nowrap text-[clamp(1.25rem,2vw,1.75rem)] font-medium leading-none tracking-[-0.03em]">
-              {profile.name}
+              {t.identity.name}
             </p>
-            <p className="mt-2 max-w-[14rem] text-xs leading-snug text-ink-mute">
-              {profile.role}
+            <p className="mt-2 max-w-[14rem] text-xs leading-snug text-ink-body">
+              {t.identity.role}
             </p>
           </div>
 
@@ -116,7 +138,6 @@ export function ToolsSection() {
               onMouseLeave={() => setHovered(null)}
               onFocus={() => setHovered(node.name)}
               onBlur={() => setHovered(null)}
-              aria-describedby="tools-legend"
               className={`absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border px-4 py-2 text-[0.8125rem] tracking-[-0.01em] transition-all duration-500 ease-editorial ${
                 hovered === node.name
                   ? 'border-accent bg-accent text-white'
@@ -128,10 +149,6 @@ export function ToolsSection() {
             </button>
           ))}
         </div>
-
-        <p id="tools-legend" className="label mt-10 text-center text-ink-faint">
-          {grouped.map(([group, items]) => `${group} (${items.length})`).join('  /  ')}
-        </p>
       </div>
 
       {/* Below lg: grouped list */}
@@ -139,7 +156,9 @@ export function ToolsSection() {
         <div data-fade-group className="grid gap-8 sm:grid-cols-3">
           {grouped.map(([group, items]) => (
             <div key={group} data-fade>
-              <p className="label label-marked border-t border-rule pt-4">{group}</p>
+              <p className="label label-marked border-t border-rule pt-4">
+                {t.tools.groups[group as keyof typeof t.tools.groups]}
+              </p>
               <ul className="mt-4 space-y-2">
                 {items.map((item) => (
                   <li key={item} className="text-[1.0625rem] tracking-[-0.015em] text-ink-soft">

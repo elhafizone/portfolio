@@ -2,10 +2,11 @@
 
 import { useRef } from 'react';
 
+import { useLocale } from '@/components/i18n/LocaleProvider';
 import { Reveal } from '@/components/motion/Reveal';
 import { useSectionMotion } from '@/components/motion/useSectionMotion';
 import { SectionHeading } from '@/components/ui/SectionHeading';
-import { expertiseColumns, expertiseCopy } from '@/data/expertise';
+import { expertiseColumnIds } from '@/data/expertise';
 
 /**
  * The positioning section: one person holding both halves of the project.
@@ -16,29 +17,34 @@ import { expertiseColumns, expertiseCopy } from '@/data/expertise';
  */
 export function ExpertiseSection() {
   const rootRef = useRef<HTMLElement>(null);
+  const { t } = useLocale();
   useSectionMotion(rootRef);
 
   return (
     <section
       ref={rootRef}
       id="expertise"
-      className="section border-t border-rule bg-surface"
+      className="section bg-surface"
       aria-labelledby="expertise-heading"
       data-parallax-scope
     >
       <SectionHeading
-        eyebrow={expertiseCopy.eyebrow}
+        eyebrow={t.expertise.eyebrow}
         titleId="expertise-heading"
-        index="04"
-        title={['Design Meets', <span key="d" className="serif-accent">Development.</span>]}
-        intro={expertiseCopy.intro}
+        title={[
+          t.expertise.title[0],
+          <span key="d" className="serif-accent">
+            {t.expertise.title[1]}
+          </span>,
+        ]}
+        intro={t.expertise.intro}
       />
 
       <div className="shell mt-16 lg:mt-24">
         <div className="relative grid gap-12 lg:grid-cols-12 lg:gap-8">
-          {expertiseColumns.map((column, colIndex) => (
+          {t.expertise.columns.map((column, colIndex) => (
             <div
-              key={column.id}
+              key={expertiseColumnIds[colIndex]}
               data-fade-group
               className={
                 colIndex === 0
@@ -46,9 +52,8 @@ export function ExpertiseSection() {
                   : 'lg:col-span-5 lg:col-start-8'
               }
             >
-              <div data-fade className="flex items-baseline justify-between border-t border-rule-strong pt-5">
-                <span className="label numeral text-accent-ink">{column.index}</span>
-                <span className="label">{column.id === 'design' ? 'Visual' : 'Technical'}</span>
+              <div data-fade className="border-t border-rule-strong pt-5">
+                <span className="label label--accent">{column.label}</span>
               </div>
 
               <h3
@@ -58,7 +63,7 @@ export function ExpertiseSection() {
                 {column.title}
               </h3>
 
-              <p data-fade className="mt-5 max-w-sm text-[1rem] leading-snug text-ink-mute text-pretty">
+              <p data-fade className="mt-5 max-w-sm text-[1rem] leading-snug text-ink-body text-pretty">
                 {column.summary}
               </p>
 
@@ -100,26 +105,26 @@ export function ExpertiseSection() {
           <div className="mt-20 border-t border-rule-strong pt-12 lg:mt-28">
             <div className="flex flex-col items-center gap-6 text-center">
               <p data-fade className="label label-marked">
-                The intersection
+                {t.expertise.intersectionLabel}
               </p>
 
               <p
                 data-fade
                 className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[clamp(1.75rem,5.2vw,4rem)] font-medium leading-none tracking-[-0.04em]"
               >
-                <span>{expertiseCopy.equation.left}</span>
+                <span>{t.expertise.equation.left}</span>
                 <span aria-hidden="true" className="text-accent">
                   +
                 </span>
-                <span>{expertiseCopy.equation.right}</span>
+                <span>{t.expertise.equation.right}</span>
                 <span aria-hidden="true" className="text-accent">
                   =
                 </span>
-                <span className="serif-accent">{expertiseCopy.equation.result}</span>
+                <span className="serif-accent">{t.expertise.equation.result}</span>
               </p>
 
               <p data-fade className="lead mt-4 max-w-2xl">
-                {expertiseCopy.outcome}
+                {t.expertise.outcome}
               </p>
             </div>
           </div>

@@ -36,9 +36,15 @@ export const siteConfig = {
   title: 'Creative Designer & WordPress Developer',
   url: resolvedSiteUrl,
   indexable: isCanonicalDomain,
+  /**
+   * When the CONTENT last genuinely changed — the copy, the work, the services.
+   * Feeds `lastModified` in the sitemap. Bump it when you change what the site
+   * says, not when you change how it looks or redeploy.
+   */
+  contentUpdatedAt: new Date('2026-09-08'),
   locale: 'en',
   description:
-    'Mohammed Al-Hafiz is a Creative Designer and WordPress Developer with over 10 years of experience in graphic, visual, print and digital design. Since 2020 he has focused on building professional WordPress websites that combine modern design, usability and functionality.',
+    'Mohammed Al-Hafiz is a Sudanese Creative Designer and WordPress Developer with over 10 years of experience across 3D, graphic, visual, print and digital design. Since 2020 he has focused on building professional WordPress websites that combine modern design, usability and functionality.',
   keywords: [
     'Creative Designer',
     'WordPress Developer',
@@ -55,21 +61,21 @@ type ContactConfig = {
   email: string;
   whatsapp: string;
   linkedin: string;
-  mostaql: string;
   behance: string;
   location: string;
 };
 
 /** Contact channels. Empty string = not configured yet, link is hidden. */
 export const contactConfig: ContactConfig = {
-  /** TODO: add the public contact email address. */
-  email: '',
-  /** TODO: add the WhatsApp number in international format, digits only. */
-  whatsapp: '',
+  /** Published by Mohammed on 8 September 2026 for public display. */
+  email: 'hello@hafizone.dev',
+  /**
+   * International format. Non-digits are stripped when the wa.me link is built,
+   * so the spacing here is purely for reading: 20 = Egypt, then the number.
+   */
+  whatsapp: '+20 12 11758105',
   /** TODO: add the LinkedIn profile URL. */
   linkedin: '',
-  /** TODO: add the Mostaql profile URL. */
-  mostaql: '',
   /** TODO: add the Behance / Dribbble / other portfolio URL. */
   behance: '',
   /** Optional location string shown in the footer, e.g. "Riyadh, Saudi Arabia". */

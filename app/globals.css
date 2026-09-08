@@ -16,7 +16,8 @@
     /* Ink */
     --ink: #0d0d0d;
     --ink-soft: #262626;
-    --ink-mute: #6e6e6e; /* 5.1:1 on white - safe for body text */
+    --ink-body: #333333; /* 12.6:1 on white - every paragraph of running text */
+    --ink-mute: #6e6e6e; /* 5.1:1 on white - small meta and micro labels */
     --ink-faint: #a8a8a2; /* decorative only - never body copy */
     --rule: #e7e7e1;
     --rule-strong: #d5d5cd;
@@ -35,6 +36,14 @@
     --step-h3: clamp(1.375rem, 2.2vw, 2rem);
     --step-lead: clamp(1.0625rem, 1.35vw, 1.4rem);
     --step-body: clamp(0.9375rem, 1.02vw, 1.0625rem);
+
+    /*
+      Height the fixed header occupies. Sticky scenes reserve this much at the
+      top so their content is never drawn underneath the navbar, and
+      HEADER_OFFSET in config/motion.ts uses the same figure when scrolling to
+      an anchor. Keep the two in step.
+    */
+    --header-h: 92px;
 
     /* Rhythm */
     --gutter: clamp(1.25rem, 4.5vw, 4.5rem);
@@ -204,7 +213,7 @@
   .lead {
     font-size: var(--step-lead);
     line-height: 1.5;
-    color: var(--ink-mute);
+    color: var(--ink-body);
     letter-spacing: -0.01em;
     text-wrap: pretty;
   }
@@ -249,24 +258,6 @@
     transform-origin: left;
   }
 
-  /* Faint vertical grid lines, used sparingly as a background detail. */
-  .grid-lines {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    display: none;
-  }
-
-  @media (min-width: 1024px) {
-    .grid-lines {
-      display: block;
-      background-image: linear-gradient(to right, var(--rule) 1px, transparent 1px);
-      background-size: calc(100% / 6) 100%;
-      opacity: 0.55;
-      -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
-      mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
-    }
-  }
 }
 
 /* ==========================================================================
@@ -334,4 +325,132 @@
   html[data-cursor="on"] [role="button"] {
     cursor: none;
   }
+}
+
+/* ==========================================================================
+   RTL & ARABIC TYPOGRAPHY
+
+   Arabic is not "the same design, mirrored". Two things genuinely break if the
+   Latin treatment is applied to Arabic script:
+
+     1. Negative letter-spacing. Latin display type is tightened to -0.045em
+        here; Arabic letters join, so tightening them collides the joins and
+        degrades legibility. All tracking is reset to normal.
+     2. Positive letter-spacing on the micro labels (0.18em). In Arabic that
+        pulls connected letters apart into disconnected glyphs, which reads as
+        broken text rather than as a tracked-out label.
+
+   Direction itself is handled by `dir` on <html> plus logical properties in the
+   markup; only what CSS cannot express logically is listed below.
+   ========================================================================== */
+
+[dir='rtl'] body {
+  font-family: var(--font-arabic), var(--font-sans);
+}
+
+/* Latin faces have no Arabic glyphs; keep the mono face for digits only. */
+[dir='rtl'] .label,
+[dir='rtl'] h1,
+[dir='rtl'] h2,
+[dir='rtl'] h3,
+[dir='rtl'] h4,
+[dir='rtl'] .mega,
+[dir='rtl'] .display,
+[dir='rtl'] .h2,
+[dir='rtl'] .lead {
+  font-family: var(--font-arabic), var(--font-sans);
+  letter-spacing: normal;
+}
+
+/*
+  WEIGHT REMAPPING FOR ALMARAI.
+
+  Almarai publishes 300 / 400 / 700 / 800 and nothing between 400 and 700. The
+  Latin design uses 500 for display type and 600 for the accent word; CSS
+  resolves a missing 500 DOWNWARDS, so without these rules every Arabic heading
+  would render at plain body weight while its English counterpart stayed medium.
+  Each display level is restated at a weight the family actually ships.
+*/
+[dir='rtl'] h1,
+[dir='rtl'] h2,
+[dir='rtl'] h3,
+[dir='rtl'] h4,
+[dir='rtl'] .mega,
+[dir='rtl'] .display,
+[dir='rtl'] .h2 {
+  font-weight: 700;
+}
+
+/* Running text stays at the one body weight Almarai has below 700. */
+[dir='rtl'] body,
+[dir='rtl'] .lead,
+[dir='rtl'] .label {
+  font-weight: 400;
+}
+
+/*
+  `font-medium` is Tailwind's 500, used across the site wherever something needs
+  to sit a step above body text — buttons, quotations, the opening line of the
+  bio. Almarai has no 500, so all of it was resolving to plain 400 and that
+  emphasis simply vanished in Arabic. 700 is the next weight the family actually
+  ships, and it is the conventional Arabic counterpart to a Latin medium:
+  Almarai's regular is comparatively light, its bold comparatively restrained.
+*/
+[dir='rtl'] .font-medium {
+  font-weight: 700;
+}
+
+/* Arabic display type needs more leading than tightly-tracked Latin, and
+   Almarai's tall ascenders need a little more of it again. */
+[dir='rtl'] .mega {
+  line-height: 1.18;
+}
+
+[dir='rtl'] .display,
+[dir='rtl'] .h2 {
+  line-height: 1.24;
+}
+
+[dir='rtl'] h3 {
+  line-height: 1.3;
+}
+
+/* Tabular numerals stay in the mono face - digits are shared across scripts. */
+[dir='rtl'] .numeral {
+  font-family: var(--font-mono);
+  letter-spacing: normal;
+}
+
+/*
+  The serif accent face is Latin-only. In Arabic the emphasis is carried by
+  colour and weight instead of an italic serif that has no Arabic equivalent.
+*/
+[dir='rtl'] .serif-accent {
+  font-family: var(--font-arabic), var(--font-sans);
+  font-style: normal;
+  /* 800, not 600: it has to read as heavier than the 700 heading around it. */
+  font-weight: 800;
+  letter-spacing: normal;
+}
+
+/*
+  Transform origins have no logical equivalent in CSS. Progress bars grow from
+  the reading edge, so they start at the right in RTL.
+*/
+[dir='rtl'] .origin-left {
+  transform-origin: right;
+}
+
+[dir='rtl'] .origin-right {
+  transform-origin: left;
+}
+
+/* The hover underline sweeps in from the reading edge. */
+[dir='rtl'] .link-underline::after {
+  transform-origin: left;
+}
+
+[dir='rtl'] .link-underline:hover::after,
+[dir='rtl'] .link-underline:focus-visible::after {
+  transform-origin: right;
 }

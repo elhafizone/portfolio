@@ -2,10 +2,11 @@
 
 import { useRef } from 'react';
 
+import { useLocale } from '@/components/i18n/LocaleProvider';
 import { Parallax } from '@/components/motion/Parallax';
 import { useSectionMotion } from '@/components/motion/useSectionMotion';
 import { SectionHeading } from '@/components/ui/SectionHeading';
-import { experienceCopy, timeline } from '@/data/experience';
+import { timelineHighlighted, timelineTags } from '@/data/experience';
 
 /**
  * Career timeline.
@@ -16,22 +17,27 @@ import { experienceCopy, timeline } from '@/data/experience';
  */
 export function ExperienceSection() {
   const rootRef = useRef<HTMLElement>(null);
+  const { t } = useLocale();
   useSectionMotion(rootRef);
 
   return (
     <section
       ref={rootRef}
       id="experience"
-      className="section border-t border-rule"
+      className="section"
       aria-labelledby="experience-heading"
       data-parallax-scope
     >
       <SectionHeading
-        eyebrow={experienceCopy.eyebrow}
+        eyebrow={t.experience.eyebrow}
         titleId="experience-heading"
-        index="06"
-        title={['10+ Years of', <span key="c" className="serif-accent">Creative Experience</span>]}
-        intro={experienceCopy.intro}
+        title={[
+          t.experience.title[0],
+          <span key="c" className="serif-accent">
+            {t.experience.title[1]}
+          </span>,
+        ]}
+        intro={t.experience.intro}
       />
 
       <div className="shell mt-16 lg:mt-24">
@@ -39,52 +45,41 @@ export function ExperienceSection() {
           {/* Spine */}
           <span
             aria-hidden="true"
-            className="absolute left-[7px] top-2 hidden h-[calc(100%-2rem)] w-px bg-rule sm:block lg:left-[calc(16.6667%+7px)]"
+            className="absolute top-2 hidden h-[calc(100%-2rem)] w-px bg-rule start-[7px] sm:block"
           />
 
-          {timeline.map((entry, i) => (
+          {t.experience.entries.map((entry, i) => (
             <li
-              key={entry.id}
+              key={entry.marker}
               data-fade
-              className="relative grid gap-4 border-b border-rule py-10 sm:grid-cols-[auto_1fr] sm:gap-8 lg:grid-cols-12 lg:gap-8 lg:py-14"
+              className="relative grid gap-4 border-b border-rule py-10 sm:gap-8 lg:grid-cols-12 lg:gap-8 lg:py-14"
             >
-              {/* Marker */}
-              <div className="flex items-center gap-4 sm:block lg:col-span-2">
-                <span className="label numeral text-ink-faint lg:block">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-              </div>
-
               {/* Node + label */}
               <div className="relative flex items-start gap-5 lg:col-span-3">
                 <span
                   aria-hidden="true"
                   className={`relative z-10 mt-2 hidden h-[15px] w-[15px] flex-none rounded-full border-2 sm:block ${
-                    entry.id === '2020' || entry.id === 'today'
-                      ? 'border-accent bg-accent'
-                      : 'border-rule-strong bg-paper'
+                    timelineHighlighted[i] ? 'border-accent bg-accent' : 'border-rule-strong bg-paper'
                   }`}
                 />
                 <span
-                  className={`label ${
-                    entry.id === '2020' || entry.id === 'today' ? 'label--accent' : ''
-                  }`}
+                  className={`label numeral ${timelineHighlighted[i] ? 'label--accent' : ''}`}
                 >
                   {entry.marker}
                 </span>
               </div>
 
               {/* Content */}
-              <div className="lg:col-span-7">
+              <div className="lg:col-span-8 lg:col-start-5">
                 <Parallax speed={i % 2 === 0 ? 0.03 : 0.06}>
                   <h3 className="text-[clamp(1.75rem,3.4vw,2.75rem)] font-medium leading-none tracking-[-0.035em]">
                     {entry.title}
                   </h3>
-                  <p className="mt-5 max-w-xl text-[1rem] leading-relaxed text-ink-mute text-pretty">
+                  <p className="mt-5 max-w-xl text-[1rem] leading-relaxed text-ink-body text-pretty">
                     {entry.description}
                   </p>
                   <ul className="mt-6 flex flex-wrap gap-2">
-                    {entry.tags.map((tag) => (
+                    {timelineTags[i].map((tag) => (
                       <li
                         key={tag}
                         className="label rounded-full border border-rule px-3 py-2 text-[0.5625rem]"

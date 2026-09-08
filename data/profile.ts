@@ -17,11 +17,19 @@ export const profile = {
 
   /**
    * Other names the same person is known by. Mohammed uses Al-Kamali and
-   * Al-Hafiz interchangeably, and the Mostaql profile the reviews link to is
-   * under Al-Kamali. Declaring them keeps the site findable under either name
-   * and stops the review link looking like it belongs to someone else.
+   * Al-Hafiz interchangeably. Declaring both keeps the site findable under
+   * either name.
    */
-  alternateNames: ['Mohammed Al-Kamali', 'محمد الكمالي', 'محمد الحافظ'],
+  alternateNames: [
+    'Mohammed Al-Kamali',
+    'Mohammed Ahmad El-Kamali',
+    'محمد الكمالي',
+    'محمد الحافظ',
+  ],
+
+  /** Stated on the CV. */
+  nationality: 'Sudanese',
+  nationalityCountry: 'Sudan',
 
   role: 'Creative Designer & WordPress Developer',
 
@@ -29,14 +37,15 @@ export const profile = {
     'I combine creative design and WordPress development to create modern, practical, and distinctive digital experiences.',
 
   positioningAlt:
-    'Designing modern visual identities and building professional digital experiences.',
+    'Designing and building professional digital experiences, end to end.',
 
   oneLine:
-    'Creative Designer & WordPress Developer creating modern visual identities and professional digital experiences.',
+    'Creative Designer & WordPress Developer building modern, professional digital experiences.',
 
   bio: [
-    'Creative Designer and WordPress Developer with over 10 years of experience across graphic, visual, print and digital design.',
-    'Since 2020 the focus has shifted more strongly toward building professional WordPress websites — combining modern design, usability, performance and functionality around the needs of each project.',
+    'Creative Designer and WordPress Developer with over 10 years of experience across 3D, graphic, visual, print and digital design.',
+    'A Sudanese designer with a multimedia degree from Garden City University (UGC). The career began in 3D — interior, exterior and product visualisation — and widened through motion graphics, print and promotional work before the focus moved to the browser.',
+    'Since 2020 that focus has been on building professional WordPress websites — combining modern design, usability, performance and functionality around the needs of each project.',
     'The work bridges creativity and technology: understanding a project from both the visual and the technical side, and turning an idea into a clear, distinctive and effective digital experience.',
   ],
 
@@ -52,20 +61,31 @@ export const profile = {
   },
 
   /**
-   * Verifiable facts only. The last two are read straight off the public
-   * Mostaql profile, which the Reviews section links to — so a visitor can
-   * check them rather than take them on trust.
+   * Verifiable facts only, both taken from the CV.
+   *
+   * The two freelance-platform figures that used to sit here (completed
+   * projects, client ratings) were removed along with the platform itself. Do
+   * not reintroduce a number that the site no longer shows its source for.
    */
   facts: [
     { value: '10+', label: 'Years of design experience' },
     { value: '2020', label: 'WordPress development focus since' },
-    { value: '30', label: 'Projects completed on Mostaql' },
-    { value: '23', label: 'Client ratings on Mostaql' },
   ],
 
-  /** Portrait is optional. No portrait is fabricated — the About section falls
-   *  back to a typographic identity treatment when this stays null. */
-  portrait: null as { src: string; alt: string } | null,
+  /**
+   * Portrait. Supplied by Mohammed; cropped to 4:5 and encoded to WebP without
+   * upscaling, so what ships is the real detail of the original rather than an
+   * interpolated version of it.
+   *
+   * NOTE: the source is 896x1200. The slot renders at roughly 600 CSS px wide,
+   * so this covers a standard display but is short of the 1200x1500 a retina
+   * screen would use. A higher-resolution export would sharpen it — drop it in
+   * at the same path and nothing else changes.
+   */
+  portrait: {
+    src: '/about/portrait.webp',
+    alt: 'Mohammed Al-Hafiz, arms folded, in a denim shirt against a plain light backdrop',
+  } as { src: string; alt: string } | null,
 } as const;
 
 export const heroCopy = {

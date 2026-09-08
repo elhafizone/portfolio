@@ -2,16 +2,18 @@
 
 import { useEffect, useRef } from 'react';
 
-import { HeroImage } from '@/components/hero/HeroImage';
+import { useLocale } from '@/components/i18n/LocaleProvider';
+import { RippleField } from '@/components/hero/RippleField';
 import { useIntroDone } from '@/components/layout/SiteShell';
 import { useMotion } from '@/components/motion/MotionProvider';
 import { SplitText } from '@/components/motion/SplitText';
 import { Button } from '@/components/ui/Button';
-import { heroCopy, profile } from '@/data/profile';
 import { createHeroScrollTransition, createHeroTimeline } from '@/lib/animations';
 import { gsap, registerGsap } from '@/lib/gsap';
 
 /**
+ * Centred hero over a live water surface.
+ *
  * Two independent motion systems share this section, so they are kept strictly
  * apart:
  *
@@ -20,16 +22,21 @@ import { gsap, registerGsap } from '@/lib/gsap';
  *
  * No element is touched by both. That separation is what lets the scroll
  * trigger be created immediately rather than being deferred until the entrance
- * finishes - a deferred trigger registers out of document order, which left the
+ * finishes — a deferred trigger registers out of document order, which left the
  * scenes below it resolving against stale measurements.
  *
- * The right-hand cell holds a fixed-ratio image, not a canvas. A WebGL canvas
- * sized itself from its container while the container was `height: 100%`, and
- * the pair grew on every resize.
+ * The background is `RippleField`, which paints its own CSS gradient and only
+ * then layers a WebGL water simulation on top of it. It sits in its own
+ * absolutely-positioned layer BEHIND the content, and the text sits in a
+ * `pointer-events-none` wrapper so the whole hero surface stays reachable by the
+ * pointer — the ripples must respond across the full section, not only in the
+ * gaps between words. The links and buttons re-enable pointer events for
+ * themselves.
  */
 export function Hero() {
   const rootRef = useRef<HTMLElement>(null);
   const { reduced, ready, scrollTo } = useMotion();
+  const { t } = useLocale();
   const introDone = useIntroDone();
 
   // The scroll transition is independent of the preloader and is created up
@@ -69,91 +76,72 @@ export function Hero() {
       aria-labelledby="hero-heading"
       className="relative flex min-h-[100svh] flex-col justify-between overflow-hidden pb-10 pt-28 sm:pt-32 lg:pb-14 lg:pt-36"
     >
-      <div className="grid-lines" aria-hidden="true" />
+      <RippleField />
 
       {/* Top metadata row */}
-      <div className="shell relative z-10" data-hero="meta">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3 border-t border-rule pt-5">
+      <div className="shell pointer-events-none relative z-10" data-hero="meta">
+        <div className="border-t border-rule/70 pt-5 text-center">
           <span className="label label-marked" data-fade>
-            {profile.role}
-          </span>
-          <span className="label numeral text-ink-faint" data-fade>
-            01 &mdash; Introduction
+            {t.identity.role}
           </span>
         </div>
       </div>
 
-      {/* Headline + visual */}
-      <div className="shell relative z-10 grid flex-1 content-center gap-10 py-12 lg:grid-cols-12 lg:gap-6 lg:py-8">
-        <div className="lg:col-span-8 lg:pr-6 xl:col-span-7">
-          <h1 id="hero-heading" className="sr-only">
-            {profile.name} &mdash; {profile.role}
-          </h1>
+      {/* Centred headline + copy */}
+      <div className="shell pointer-events-none relative z-10 flex flex-1 flex-col items-center justify-center py-12 text-center lg:py-8">
+        <h1 id="hero-heading" className="sr-only">
+          {t.identity.name} &mdash; {t.identity.role}
+        </h1>
 
-          <div data-hero-layer="headline">
-            <SplitText
-              aria-hidden="true"
-              as="div"
-              data-hero="headline"
-              lines={[
-                heroCopy.headline[0],
-                <>
-                  Building <span className="serif-accent">digital</span>
-                </>,
-                heroCopy.headline[2],
-              ]}
-              className="mega"
-            />
-          </div>
-
-          <div data-hero-layer="copy">
-            <p data-hero="intro" className="lead mt-8 max-w-xl lg:mt-10">
-              {heroCopy.intro}
-            </p>
-
-            <div
-              data-hero="cta"
-              className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center lg:mt-11"
-            >
-              <span data-fade>
-                <Button href={heroCopy.primaryCta.href} cursorLabel="VIEW" withArrow>
-                  {heroCopy.primaryCta.label}
-                </Button>
-              </span>
-              <span data-fade>
-                <Button
-                  href={heroCopy.secondaryCta.href}
-                  variant="secondary"
-                  cursorLabel="TALK"
-                >
-                  {heroCopy.secondaryCta.label}
-                </Button>
-              </span>
-            </div>
-          </div>
+        <div data-hero-layer="headline" className="w-full">
+          <SplitText
+            aria-hidden="true"
+            as="div"
+            data-hero="headline"
+            lines={[
+              t.hero.headline[0],
+              <>
+                {t.hero.headline[1]} <span className="serif-accent">{t.hero.accentWord}</span>
+              </>,
+              t.hero.headline[2],
+            ]}
+            className="mega mx-auto max-w-5xl"
+          />
         </div>
 
-        {/* Visual object */}
-        <div
-          data-hero-layer="visual"
-          className="lg:col-span-4 lg:-mr-6 lg:self-center xl:col-span-5"
-        >
-          <div data-hero="visual" className="mx-auto w-full max-w-[26rem] lg:max-w-none">
-            <HeroImage />
+        <div data-hero-layer="copy" className="w-full">
+          <p data-hero="intro" className="lead mx-auto mt-8 max-w-2xl lg:mt-10">
+            {t.hero.intro}
+          </p>
+
+          <div
+            data-hero="cta"
+            className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:mt-11"
+          >
+            <span data-fade className="pointer-events-auto">
+              <Button href="#work" cursorLabel="VIEW" withArrow>
+                {t.hero.primaryCta}
+              </Button>
+            </span>
+            <span data-fade className="pointer-events-auto">
+              <Button href="#contact" variant="secondary" cursorLabel="TALK">
+                {t.hero.secondaryCta}
+              </Button>
+            </span>
           </div>
         </div>
       </div>
 
       {/* Baseline: stats + scroll hint */}
-      <div className="shell relative z-10" data-hero-layer="baseline">
+      <div className="shell pointer-events-none relative z-10" data-hero-layer="baseline">
         <div
           data-hero="stats"
-          className="flex flex-col gap-5 border-t border-rule pt-5 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-5 border-t border-rule/70 pt-5 sm:flex-row sm:items-center sm:justify-between"
         >
-          <dl className="flex flex-wrap items-baseline gap-x-10 gap-y-3">
-            {heroCopy.meta.map((item) => (
+          <dl className="flex flex-wrap items-baseline justify-center gap-x-10 gap-y-3 sm:justify-start">
+            {t.hero.meta.map((item) => (
               <div key={item.label} data-fade className="flex items-baseline gap-3">
-                <dt className="label text-ink-faint">{item.label}</dt>
+                <dt className="label text-ink-mute">{item.label}</dt>
                 <dd className="text-[0.9375rem] tracking-[-0.01em] text-ink">{item.value}</dd>
               </div>
             ))}
@@ -163,10 +151,10 @@ export function Hero() {
             type="button"
             data-fade
             onClick={() => scrollTo('#work')}
-            className="label group flex items-center gap-3 self-start transition-colors hover:text-accent-ink sm:self-auto"
+            className="label group pointer-events-auto flex items-center gap-3 self-center transition-colors hover:text-accent-ink sm:self-auto"
             data-cursor-label="VIEW"
           >
-            Scroll to work
+            {t.hero.scrollHint}
             <span
               aria-hidden="true"
               className="inline-block transition-transform duration-500 ease-editorial group-hover:translate-y-0.5"

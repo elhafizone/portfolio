@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { profile } from '@/data/profile';
 import { gsap, registerGsap } from '@/lib/gsap';
+import { useLocale } from '@/components/i18n/LocaleProvider';
 import { useMotion } from '@/components/motion/MotionProvider';
 import { Logo } from '@/components/ui/Logo';
 
@@ -16,6 +16,7 @@ import { Logo } from '@/components/ui/Logo';
  */
 export function Preloader({ onDone }: { onDone: () => void }) {
   const { reduced, setScrollLocked } = useMotion();
+  const { t } = useLocale();
   const [mounted, setMounted] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -111,7 +112,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
       className="fixed inset-0 z-[100] flex flex-col justify-between bg-paper px-[var(--gutter)] py-8"
       role="status"
       aria-live="polite"
-      aria-label="Loading"
+      aria-label={t.preloader.loading}
     >
       <div data-pre-fade className="flex items-center justify-between">
         <Logo height={30} priority />
@@ -121,7 +122,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
       </div>
 
       <div data-pre-fade className="flex flex-col gap-6">
-        <p className="label">{profile.role}</p>
+        <p className="label">{t.identity.role}</p>
         <div className="h-px w-full bg-rule">
           <div
             ref={barRef}
@@ -130,7 +131,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
           />
         </div>
         <p className="text-[clamp(1.5rem,4vw,2.75rem)] font-medium leading-none tracking-[-0.035em]">
-          {profile.name}
+          {t.identity.name}
         </p>
       </div>
     </div>

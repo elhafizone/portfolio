@@ -445,6 +445,25 @@
   transform-origin: left;
 }
 
+/*
+  Footer baseline: one row at every width.
+
+  The three items are set in the MONOSPACE label face, so every character costs
+  the same width and lowercasing saves nothing. The English strings run ~60%
+  longer than the Arabic ones — measured at 375px they need 451px against 335px
+  available and push a horizontal scrollbar onto the page. Arabic fits with room
+  to spare.
+
+  So the decorative credit is dropped on small LTR screens only. The two items
+  that carry information — the copyright and the back-to-top control — are never
+  dropped, in either language.
+*/
+@media (max-width: 639px) {
+  [dir='ltr'] .footer-credit {
+    display: none;
+  }
+}
+
 /* The hover underline sweeps in from the reading edge. */
 [dir='rtl'] .link-underline::after {
   transform-origin: left;

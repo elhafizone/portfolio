@@ -141,7 +141,15 @@ export function Navbar() {
       </a>
 
       <header
-        className={`fixed inset-x-0 top-0 z-[90] transition-all duration-500 ease-editorial ${
+        /*
+          Above the mobile overlay (z-95), not below it.
+
+          At z-90 the header opened a stacking context, so the close button's
+          own z-102 was confined INSIDE it and could never rise over the panel.
+          The bars did rotate into an X on open — it was just painted beneath a
+          full-screen white sheet, leaving the menu with no visible way out.
+        */
+        className={`fixed inset-x-0 top-0 z-[100] transition-all duration-500 ease-editorial ${
           elevated ? 'py-3' : 'py-5'
         }`}
       >

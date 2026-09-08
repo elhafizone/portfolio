@@ -88,18 +88,23 @@ export function Footer() {
         </div>
 
         {/* Baseline */}
-        <div className="mt-16 flex flex-col gap-4 border-t border-rule pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="label">
+        {/* One row at every width. The type steps down below sm so three items
+            still fit a 360px screen instead of stacking. */}
+        <div className="mt-16 flex flex-row items-center justify-between gap-x-3 border-t border-rule pt-6 text-[0.5625rem] sm:gap-x-6 sm:text-[0.6875rem]">
+          <p className="label whitespace-nowrap text-[length:inherit]">
             &copy; {year} {t.identity.name}
           </p>
-          <p className="label flex items-center gap-2">
-            <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+          <p className="footer-credit label flex items-center gap-2 whitespace-nowrap text-[length:inherit]">
+            <span
+              aria-hidden="true"
+              className="inline-block h-1.5 w-1.5 flex-none rounded-full bg-accent"
+            />
             {t.footer.builtInHouse}
           </p>
           <button
             type="button"
             onClick={() => scrollTo(0)}
-            className="label link-underline self-start text-ink-soft transition-colors hover:text-accent-ink sm:self-auto"
+            className="label link-underline whitespace-nowrap text-[length:inherit] text-ink-soft transition-colors hover:text-accent-ink"
             data-cursor-label="TOP"
           >
             {t.footer.backToTop} &#8599;

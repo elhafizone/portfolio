@@ -53,20 +53,20 @@ export const projects: Project[] = [
     titleAr: 'هبوب',
     category: {
       en: 'Brand Website / WordPress',
-      ar: 'موقع علامة / ووردبريس',
+      ar: 'موقع علامة تجارية / ووردبريس',
     },
     year: '—',
     description: {
       en:
         'An Arabic oud and fragrance brand built around atmosphere rather than catalogue — deep burgundy, gold, and custom Arabic display typography carrying the whole page.',
-      ar: 'علامة عود وعطور عربية بُنيت حول الأجواء لا حول الكتالوج — عنابي عميق وذهبي، وخط عربي عرضي مخصّص يحمل الصفحة كلها.',
+      ar: 'موقع لعلامة عربية متخصّصة في العود والعطور. صمّمت التجربة حول الإحساس والهوية قبل عرض المنتجات، مع عنابي عميق وذهبي وخط عربي مخصّص يمنح الصفحة طابعها الخاص.',
     },
     technologies: ['WordPress', 'Elementor', 'Arabic RTL'],
     image: '/work/haboob.webp',
     imageAlt: {
       en:
         'Haboob homepage: a dark burgundy hero with gold Arabic display typography and a single call to action',
-      ar: 'الصفحة الرئيسية لهبوب: هيرو عنابي داكن بخط عربي ذهبي عرضي ودعوة واحدة للفعل',
+      ar: 'الصفحة الرئيسية لهبوب بتصميم عنابي داكن، وخط عربي ذهبي بارز، ودعوة واضحة لاتخاذ الإجراء.',
     },
     video: null,
     url: 'https://tryhaboob.com/',
@@ -86,13 +86,13 @@ export const projects: Project[] = [
     description: {
       en:
         'A specialist implantology and cosmetic dentistry centre in Dubai. Editorial layout, navy and gold, with every route on the page leading to a booked appointment.',
-      ar: 'مركز متخصّص في زراعة الأسنان وطب الأسنان التجميلي في دبي. تخطيط تحريري، كحلي وذهبي، وكل مسار في الصفحة ينتهي بحجز موعد.',
+      ar: 'موقع لمركز متخصّص في زراعة الأسنان وطب الأسنان التجميلي في دبي. اعتمدت فيه تخطيطًا تحريريًا وألوانًا كحلية وذهبية، مع توجيه واضح نحو حجز الموعد.',
     },
     technologies: ['WordPress', 'Elementor', 'Appointment booking'],
     image: '/work/dr-helmi.webp',
     imageAlt: {
       en: "Dr. Helmi's Dental Centre homepage: editorial hero reading Smile With Confidence beside an arched clinic photograph",
-      ar: 'الصفحة الرئيسية لمركز د. حلمي: هيرو تحريري إلى جانب صورة مقوّسة للعيادة',
+      ar: 'الصفحة الرئيسية لمركز د. حلمي بتصميم تحريري وصورة مقوّسة للعيادة بجانب المحتوى.',
     },
     video: null,
     url: 'https://drhelmisdentalcenter.com/',
@@ -113,14 +113,14 @@ export const projects: Project[] = [
     description: {
       en:
         'A litigation and legal consultancy practice. Deep navy and gold with the lawyer himself anchoring the hero — authority is the product, so the design leads with it.',
-      ar: 'مكتب للترافع والاستشارات القانونية. كحلي عميق وذهبي، والمحامي نفسه يرسّخ الهيرو — فالسلطة هي المنتج، والتصميم يقود إليها.',
+      ar: 'موقع لمكتب متخصص في الترافع والاستشارات القانونية. استخدمت الكحلي العميق والذهبي، وجعلت حضور المحامي في الواجهة جزءًا أساسيًا من بناء الثقة والهوية.',
     },
     technologies: ['WordPress', 'Elementor', 'Fluent Forms', 'Arabic RTL'],
     image: '/work/akram-abubakr.webp',
     imageAlt: {
       en:
         'Akram Abubakr law practice homepage: a navy Arabic hero with a portrait of the lawyer in his office and a consultation call to action',
-      ar: 'الصفحة الرئيسية لمكتب أكرم أبوبكر: هيرو كحلي عربي بصورة المحامي في مكتبه ودعوة للاستشارة',
+      ar: 'الصفحة الرئيسية لمكتب أكرم أبوبكر، بتصميم كحلي وصورة للمحامي في مكتبه ودعوة للاستشارة.',
     },
     video: null,
     url: 'https://akramabubakr.com/',
@@ -141,14 +141,14 @@ export const projects: Project[] = [
     description: {
       en:
         'An international support desk for expatriates and businesses operating in Saudi Arabia. Four languages, a dense service offering, and a hero that still reads in one breath.',
-      ar: 'مكتب دعم دولي للمقيمين والشركات العاملة في السعودية. أربع لغات وعرض خدمات كثيف، ومع ذلك يُقرأ الهيرو بنَفَس واحد.',
+      ar: 'موقع لمكتب دعم دولي يخدم المقيمين والشركات العاملة في السعودية. رغم تعدد الخدمات واللغات، حرصت على أن تبقى الرسالة واضحة وسهلة القراءة من اللحظة الأولى.',
     },
     technologies: ['WordPress', 'Elementor', 'Fluent Forms', 'Multilingual'],
     image: '/work/tebra.webp',
     imageAlt: {
       en:
         'Tebra homepage: a blue gradient hero over a night skyline reading International Support Desk, with a four-language switcher',
-      ar: 'الصفحة الرئيسية لتبرا: هيرو بتدرّج أزرق فوق أفق ليلي مع مبدّل لأربع لغات',
+      ar: 'الصفحة الرئيسية لتبرا بتدرج أزرق فوق أفق ليلي، مع خيار واضح للتنقل بين اللغات الأربع.',
     },
     video: null,
     url: 'https://tebra-info.com/',
@@ -168,14 +168,14 @@ export const projects: Project[] = [
     description: {
       en:
         'A personal platform for a mechanical maintenance engineer — authority site, technical blog, newsletter and store in one, held together by a single blue and white system.',
-      ar: 'منصّة شخصية لمهندس صيانة ميكانيكية — موقع مرجعي ومدوّنة تقنية ونشرة بريدية ومتجر في واحد، يجمعها نظام أزرق وأبيض واحد.',
+      ar: 'منصّة شخصية لمهندس صيانة ميكانيكية، تجمع بين الموقع التعريفي والمدونة التقنية والنشرة البريدية والمتجر، ضمن نظام بصري أزرق وأبيض متماسك.',
     },
     technologies: ['WordPress', 'WooCommerce', 'Elementor', 'Fluent Forms'],
     image: '/work/mahmoud-hassan.webp',
     imageAlt: {
       en:
         'Eng. Mahmoud Hassan homepage: a blue and white personal brand hero with a portrait and newsletter call to action',
-      ar: 'الصفحة الرئيسية للمهندس محمود حسن: هيرو أزرق وأبيض بصورة شخصية ودعوة للاشتراك في النشرة',
+      ar: 'الصفحة الرئيسية للمهندس محمود حسن، بتصميم أزرق وأبيض وصورة شخصية ودعوة للاشتراك في النشرة.',
     },
     video: null,
     url: 'https://engmahmoudhassan.com/',
@@ -195,14 +195,14 @@ export const projects: Project[] = [
     description: {
       en:
         'A veterinary clinic in Doha positioned on comfort rather than clinical distance. Warm cream and gold, online booking through Amelia, and a store alongside it.',
-      ar: 'عيادة بيطرية في الدوحة، موضوعة على الراحة لا على المسافة الطبية. كريمي دافئ وذهبي، وحجز إلكتروني عبر Amelia، ومتجر إلى جانبه.',
+      ar: 'موقع عيادة بيطرية في الدوحة صمّمته ليكون دافئًا ومريحًا بدل المظهر الطبي البارد، مع لوحة كريمية وذهبية، وحجز إلكتروني عبر Amelia، ومتجر متكامل إلى جانب الموقع.',
     },
     technologies: ['WordPress', 'WooCommerce', 'Amelia', 'Elementor', 'Fluent Forms'],
     image: '/work/pets-vet.webp',
     imageAlt: {
       en:
         'Pets Veterinary Clinic homepage: a warm cream hero with gold headline type and a cut-out photograph of a small dog',
-      ar: 'الصفحة الرئيسية للعيادة البيطرية: هيرو كريمي دافئ بعنوان ذهبي وصورة مقصوصة لكلب صغير',
+      ar: 'الصفحة الرئيسية للعيادة البيطرية، بتصميم كريمي دافئ وعنوان ذهبي وصورة لكلب صغير.',
     },
     video: null,
     url: 'https://petsveterinaryclinic.com/',
@@ -223,14 +223,14 @@ export const projects: Project[] = [
     description: {
       en:
         'A Saudi thermal-insulation manufacturer. A light, product-led B2B site where the quote request is the primary action, not an afterthought.',
-      ar: 'مصنع سعودي للعزل الحراري. موقع فاتح يقوده المنتج، وطلب عرض السعر فيه هو الإجراء الأساسي لا إضافة على الهامش.',
+      ar: 'موقع لمصنع سعودي متخصّص في العزل الحراري. ركّزت فيه على المنتج وجعلت طلب عرض السعر الإجراء الأساسي في الموقع، لا مجرد خيار ثانوي.',
     },
     technologies: ['WordPress', 'Elementor', 'Arabic RTL'],
     image: '/work/sahara-azl.webp',
     imageAlt: {
       en:
         'Sahara Azl homepage: light Arabic hero with a tilted photograph of an insulation production line',
-      ar: 'الصفحة الرئيسية لصحاري عزل: هيرو عربي فاتح بصورة مائلة لخط إنتاج العزل',
+      ar: 'الصفحة الرئيسية لصحاري عزل، بتصميم عربي فاتح وصورة مائلة لخط إنتاج العزل.',
     },
     video: null,
     url: 'https://sahara-azl.com/',
@@ -250,14 +250,14 @@ export const projects: Project[] = [
     description: {
       en:
         'Structural restoration and finishing works. A restrained light layout with a serif display headline and the track record — projects completed, years in trade — stated up front.',
-      ar: 'أعمال ترميم إنشائي وتشطيبات. تخطيط فاتح منضبط بعنوان بخط Serif، والسجلّ — المشاريع المنجزة وسنوات الخبرة — معلن من البداية.',
+      ar: 'موقع لأعمال الترميم الإنشائي والتشطيبات. اعتمدت تصميمًا فاتحًا وهادئًا مع عنوان واضح وخط Serif، وأظهرت المشاريع المنجزة والخبرة منذ البداية لبناء الثقة سريعًا.',
     },
     technologies: ['WordPress', 'WooCommerce', 'Elementor', 'Multilingual'],
     image: '/work/sakhr.webp',
     imageAlt: {
       en:
         'Sakhr Contracting homepage: a light hero with a serif headline reading Premium Restoration and Finishing beside statistic cards',
-      ar: 'الصفحة الرئيسية لصخر للمقاولات: هيرو فاتح بعنوان Serif إلى جانب بطاقات إحصائية',
+      ar: 'الصفحة الرئيسية لصخر للمقاولات، بتصميم فاتح وعنوان بارز وبطاقات تعرض الأرقام المهمة.',
     },
     video: null,
     url: 'https://sakhr4contracting.com/',
@@ -277,14 +277,14 @@ export const projects: Project[] = [
     description: {
       en:
         'Family attractions and event trains across Australia. Bright, high-energy, and built so venue operators can find the safety and logistics answers they need quickly.',
-      ar: 'ترفيه عائلي وقطارات فعاليات في أنحاء أستراليا. مشرق وعالي الطاقة، ومبني ليجد مشغّلو الأماكن إجابات السلامة واللوجستيات بسرعة.',
+      ar: 'موقع لخدمات الترفيه العائلي وقطارات الفعاليات في أستراليا. صمّمته بروح مشرقة وحيوية، مع ترتيب المحتوى بحيث يصل مشغّلو المواقع بسرعة إلى معلومات السلامة واللوجستيات.',
     },
     technologies: ['WordPress', 'Elementor', 'Fluent Forms'],
     image: '/work/si-austral.webp',
     imageAlt: {
       en:
         'Si Austral homepage: a bright hero with a photograph of a red and green event train inside a shopping centre',
-      ar: 'الصفحة الرئيسية لـ Si Austral: هيرو مشرق بصورة قطار فعاليات أحمر وأخضر داخل مركز تجاري',
+      ar: 'الصفحة الرئيسية لـ Si Austral، بتصميم مشرق وصورة لقطار فعاليات أحمر وأخضر داخل مركز تجاري.',
     },
     video: null,
     url: 'https://siaustral.com.au/',

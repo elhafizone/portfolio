@@ -33,6 +33,11 @@ export function IdentityPlate() {
           sizes="(min-width: 1024px) 40vw, 92vw"
           className="object-cover"
         />
+        <p
+          className="absolute bottom-0 end-0 m-3 rounded-sm bg-surface/85 px-2.5 py-1 text-[0.625rem] leading-none text-ink-mute backdrop-blur-sm"
+        >
+          {t.about.portraitNote}
+        </p>
       </div>
     );
   }

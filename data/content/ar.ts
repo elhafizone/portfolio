@@ -275,6 +275,7 @@ export const ar: Dictionary = {
     philosophy: ['التصميم الجيد يجب أن يكون واضحًا.', 'والأهم أن يؤدي وظيفته جيدًا.'],
     philosophyAccent: 'أما التصميم العظيم،',
     imageSlot: 'صورتي',
+    portraitNote: 'صورة مولّدة بالذكاء الاصطناعي',
   },
 
   contact: {

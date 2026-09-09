@@ -283,6 +283,7 @@ export const en = {
     philosophy: ['Good design should look clear.', 'design should also work.'],
     philosophyAccent: 'Great',
     imageSlot: 'Image',
+    portraitNote: 'Portrait generated with AI',
   },
 
   contact: {

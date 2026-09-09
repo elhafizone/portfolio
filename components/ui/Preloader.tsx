@@ -10,9 +10,10 @@ import { Logo } from '@/components/ui/Logo';
 /**
  * Minimal preloader: logo, a hairline progress rule, and a count.
  *
- * Deliberately short. It resolves on `window.load` or after a hard 1.4s cap,
- * whichever comes first, so a slow asset can never hold the page hostage. Under
- * reduced motion it never renders at all.
+ * Deliberately short (~1.2s first visit, skipped entirely for repeat visits in
+ * the same session via sessionStorage). It resolves on `window.load` or after a
+ * hard 0.7s cap, whichever comes first, so a slow asset can never hold the page
+ * hostage. Under reduced motion it never renders at all.
  */
 export function Preloader({ onDone }: { onDone: () => void }) {
   const { reduced, setScrollLocked } = useMotion();
@@ -31,6 +32,19 @@ export function Preloader({ onDone }: { onDone: () => void }) {
     if (reduced) {
       onDone();
       return;
+    }
+
+    // Skip entirely for repeat visits in the same browser session. The intro
+    // is charming once; on a reload it is 1+ second of blank page in front of
+    // content that is already cached and ready to read.
+    try {
+      if (sessionStorage.getItem('intro-seen')) {
+        onDone();
+        return;
+      }
+      sessionStorage.setItem('intro-seen', '1');
+    } catch {
+      /* storage blocked (private mode) — show the intro as usual */
     }
 
     const root = rootRef.current;
@@ -61,7 +75,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
         root.style.transform = 'translateY(-100%)';
         root.style.pointerEvents = 'none';
       }
-    }, 2600);
+    }, 1600);
 
     const ctx = gsap.context(() => {
       const state = { p: 0 };
@@ -69,7 +83,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
 
       tl.to(state, {
         p: 100,
-        duration: 1.1,
+        duration: 0.45,
         ease: 'power2.inOut',
         onUpdate: () => {
           const v = Math.round(state.p);
@@ -79,12 +93,12 @@ export function Preloader({ onDone }: { onDone: () => void }) {
       })
         .to(root.querySelectorAll('[data-pre-fade]'), {
           opacity: 0,
-          duration: 0.3,
+          duration: 0.2,
           ease: 'power2.in',
         })
         .to(root, {
           yPercent: -100,
-          duration: 0.75,
+          duration: 0.55,
           ease: 'expo.inOut',
           onComplete: finish,
         });
@@ -92,7 +106,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
       // Hard cap: never let the intro outstay its welcome.
       const cap = window.setTimeout(() => {
         tl.timeScale(3.5);
-      }, 1400);
+      }, 700);
 
       return () => window.clearTimeout(cap);
     }, root);

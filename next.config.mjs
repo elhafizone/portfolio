@@ -29,6 +29,38 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
+  async headers() {
+    return [
+      {
+        /*
+          Hash-panged build assets: safe to cache forever. MUST be a separate
+          rule from the catch-all below, because the catch-all would otherwise
+          also match /_next/static/* and strip its immutable caching.
+        */
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        /*
+          Everything else - above all the prerendered HTML documents. Next's
+          default for static pages is `s-maxage=31536000`, which is correct on
+          Vercel (the platform purges its edge cache on every deploy) but
+          catastrophic behind Hostinger's CDN (hcdn): the CDN keeps serving a
+          YEAR-old HTML that references hashed chunks the redeployed server no
+          longer contains, every chunk request 404s, and the page dies with
+          "Application error: a client-side exception has occurred"
+          (ChunkLoadError). HTML must always be revalidated against the origin;
+          the ETag makes that a cheap 304.
+        */
+        source: '/((?!_next/static|_next/image|favicon.ico).*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

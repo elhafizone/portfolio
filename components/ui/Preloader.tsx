@@ -129,7 +129,15 @@ export function Preloader({ onDone }: { onDone: () => void }) {
       aria-label={t.preloader.loading}
     >
       <div data-pre-fade className="flex items-center justify-between">
-        <Logo height={30} priority />
+        {/*
+          Not `priority`. The persistent header logo already claims that (see
+          Navbar), and Next.js only honors one preload hint per image URL — two
+          conflicting sizes meant the browser preloaded THIS one's smaller
+          variant and left the header's logo, the thing actually on screen
+          after the preloader clears, to fetch cold. This logo is on screen for
+          a moment on first visits only; it does not need to jump the queue.
+        */}
+        <Logo height={30} />
         <span className="label numeral">
           <span ref={countRef}>000</span>
         </span>

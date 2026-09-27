@@ -80,7 +80,7 @@ export function ProcessSection() {
               <div className="col-span-4">
                 <span
                   key={`n-${active}`}
-                  className="numeral block text-[clamp(7rem,16vw,15rem)] font-medium leading-[0.78] tracking-[-0.06em] text-accent"
+                  className="numeral block text-[clamp(7rem,16vw,15rem)] font-medium leading-[0.78] tracking-[-0.06em] text-accent-ink"
                   style={{ animation: reduced ? undefined : 'prcIn 0.65s var(--ease-editorial) both' }}
                 >
                   {String(active + 1).padStart(2, '0')}
@@ -140,7 +140,7 @@ export function ProcessSection() {
           {steps.map((s, i) => (
             <li key={processIds[i]} data-fade className="border-b border-rule py-8">
               <div className="flex items-baseline gap-5">
-                <span className="numeral text-[2rem] font-medium leading-none text-accent">
+                <span className="numeral text-[2rem] font-medium leading-none text-accent-ink">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div>

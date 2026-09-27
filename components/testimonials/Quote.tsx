@@ -30,7 +30,7 @@ export function Quote({ item }: Props) {
     <figure className="m-0">
       <span
         aria-hidden="true"
-        className="serif-accent block text-[2.25rem] leading-[0.6] text-accent"
+        className="serif-accent block text-[2.25rem] leading-[0.6] text-accent-ink"
       >
         &ldquo;
       </span>

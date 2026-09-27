@@ -312,7 +312,7 @@ function Field({
         <label htmlFor={id} className="label">
           {label}
           {required && (
-            <span aria-hidden="true" className="text-accent ms-1">
+            <span aria-hidden="true" className="text-accent-ink ms-1">
               *
             </span>
           )}

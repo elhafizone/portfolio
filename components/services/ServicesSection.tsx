@@ -84,7 +84,7 @@ export function ServicesSection() {
                   <div className="flex items-start gap-8">
                     <span
                       key={`n-${active}`}
-                      className="numeral mt-2 text-[clamp(3rem,5vw,5rem)] font-medium leading-none text-accent"
+                      className="numeral mt-2 text-[clamp(3rem,5vw,5rem)] font-medium leading-none text-accent-ink"
                     >
                       {String(active + 1).padStart(2, '0')}
                     </span>
@@ -191,7 +191,7 @@ export function ServicesSection() {
           {items.map((service, i) => (
             <li key={serviceIds[i]} data-fade className="border-b border-rule py-9">
               <div className="flex items-baseline gap-5">
-                <span className="numeral text-lg font-medium text-accent">
+                <span className="numeral text-lg font-medium text-accent-ink">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div className="flex-1">

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useMotion } from '@/components/motion/MotionProvider';
+import { BREAKPOINT } from '@/config/motion';
 
 /**
  * The hero's background: a procedural gradient with a real water surface on it.
@@ -78,8 +79,12 @@ const SIM_WIDTH_MAX = 512;
 const POINTER_STRENGTH = 0.04;
 /** Radius of the pointer kick, in aspect-corrected UV. Wider = gentler swell. */
 const POINTER_RADIUS = 0.075;
-/** Cap the backing store so 4K displays do not render 4x the pixels for free. */
-const MAX_DPR = 2;
+/**
+ * Cap the backing store. Cost scales with the SQUARE of this, so 2 renders 78%
+ * more pixels than 1.5 for a refraction effect on a soft gradient — a
+ * difference nobody can see and every frame has to pay for.
+ */
+const MAX_DPR = 1.5;
 
 /**
  * Brand palette, mirrored from the tokens in globals.css. Shaders cannot read
@@ -315,6 +320,34 @@ export function RippleField({ className = '' }: { className?: string }) {
   const { reduced, ready } = useMotion();
   /** Flips true only once the simulation is actually running and drawing. */
   const [live, setLive] = useState(false);
+  /** Whether this device should run the simulation at all. */
+  const [eligible, setEligible] = useState(false);
+
+  /*
+    POINTER-DRIVEN, SO IT ONLY RUNS WHERE THERE IS A POINTER.
+
+    The ripples follow a cursor. A touch screen has none, so on a phone this was
+    a full-screen fluid simulation rendering every frame for an effect nobody
+    could trigger — and phone-class hardware pays for it on the CPU. Lighthouse,
+    whose headless Chromium has no GPU and falls back to software rasterisation,
+    measured 18,990ms of total blocking time against a 2.1s LCP: the page painted
+    quickly and then froze solid.
+
+    Touch devices get the CSS gradient, which is all they could see anyway.
+
+    This is a live media query rather than a one-shot check, so dragging a
+    desktop window across the breakpoint starts and stops the water instead of
+    leaving it stuck at whatever the width happened to be on load.
+  */
+  useEffect(() => {
+    const mq = window.matchMedia(
+      `(min-width: ${BREAKPOINT.lg}px) and (hover: hover) and (pointer: fine)`
+    );
+    const update = () => setEligible(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -325,6 +358,11 @@ export function RippleField({ className = '' }: { className?: string }) {
       // Either the OS asked for reduced motion, or the frame-loop watchdog
       // found this device cannot sustain one. Both mean: gradient only.
       host.dataset.ripple = 'reduced-motion';
+      return;
+    }
+
+    if (!eligible) {
+      host.dataset.ripple = 'no-pointer';
       return;
     }
 
@@ -490,7 +528,12 @@ export function RippleField({ className = '' }: { className?: string }) {
       frame = requestAnimationFrame(loop);
       if (!onScreen || document.hidden) return;
 
-      resize();
+      /*
+        `resize()` used to run HERE, every frame. It reads
+        getBoundingClientRect(), so it forced a layout on all 60 frames a second
+        for a value that changes only when the window does — which is what the
+        ResizeObserver below is for. This was the forced reflow in the report.
+      */
 
       /* Simulation passes, ping-ponging between the two targets. */
       gl.useProgram(simProgram);
@@ -571,7 +614,7 @@ export function RippleField({ className = '' }: { className?: string }) {
       */
       setLive(false);
     };
-  }, [ready, reduced]);
+  }, [ready, reduced, eligible]);
 
   return (
     <div

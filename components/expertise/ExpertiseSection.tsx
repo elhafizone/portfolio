@@ -113,11 +113,11 @@ export function ExpertiseSection() {
                 className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[clamp(1.75rem,5.2vw,4rem)] font-medium leading-none tracking-[-0.04em]"
               >
                 <span>{t.expertise.equation.left}</span>
-                <span aria-hidden="true" className="text-accent">
+                <span aria-hidden="true" className="text-accent-ink">
                   +
                 </span>
                 <span>{t.expertise.equation.right}</span>
-                <span aria-hidden="true" className="text-accent">
+                <span aria-hidden="true" className="text-accent-ink">
                   =
                 </span>
                 <span className="serif-accent">{t.expertise.equation.result}</span>

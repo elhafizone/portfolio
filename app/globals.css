@@ -16,9 +16,17 @@
     /* Ink */
     --ink: #0d0d0d;
     --ink-soft: #262626;
-    --ink-body: #333333; /* 12.6:1 on white - every paragraph of running text */
-    --ink-mute: #6e6e6e; /* 5.1:1 on white - small meta and micro labels */
-    --ink-faint: #a8a8a2; /* decorative only - never body copy */
+    /*
+      Every tier here clears WCAG AA for small text (4.5:1 on white).
+
+      --ink-faint used to be #a8a8a2, which is 2.4:1. It was documented as
+      "decorative only", but it was in fact carrying real text — the contact
+      email, the "Optional" field hint, the channel labels, the step counters.
+      A 2.4:1 email address is not decorative, it is an unreadable email address.
+    */
+    --ink-body: #333333; /* 12.6:1 - every paragraph of running text */
+    --ink-mute: #5f5f5b; /*  6.4:1 - small meta and micro labels */
+    --ink-faint: #6f6f6a; /*  5.0:1 - the faintest tier that still passes AA */
     --rule: #e7e7e1;
     --rule-strong: #d5d5cd;
 

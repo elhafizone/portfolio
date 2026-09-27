@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useLocale } from '@/components/i18n/LocaleProvider';
@@ -115,20 +114,28 @@ export function Navbar() {
   );
 
   /**
-   * Language switch. A real navigation rather than a client-side flip, so the
-   * document comes back from the server with the right `lang` and `dir`.
+   * Language switch. A real `<a>`, not `next/link` — this has to be a full
+   * document navigation, not a client-side route transition.
+   *
+   * The app tree keeps `<html>` inside `app/[locale]/layout.tsx`, which also
+   * mounts the one-time Preloader. A client-side transition between `/` and
+   * `/en` re-mounts that layout without a real page load, so the Preloader's
+   * own mount effect fires again — but `sessionStorage` already has
+   * `intro-seen`, so nothing ever calls `onDone()` to clear it. It gets stuck
+   * rendered at `z-[100]`, fully opaque, over the entire page: the "site
+   * vanished after switching language" bug. A hard navigation reloads the
+   * document instead of re-triggering that mount.
    */
   const languageSwitch = (
-    <Link
+    <a
       href={localePath(other)}
       hrefLang={htmlLang[other]}
       lang={htmlLang[other]}
-      prefetch={false}
       data-cursor-label="LANG"
       className="label rounded-full border border-rule px-3 py-2 text-ink-soft transition-colors duration-300 hover:border-accent hover:text-accent-ink"
     >
       {localeName[other]}
-    </Link>
+    </a>
   );
 
   return (

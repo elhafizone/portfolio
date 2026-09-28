@@ -63,8 +63,20 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
+/**
+ * `colorScheme: 'light'` is not decorative. The site has no dark-mode CSS at
+ * all - every color is a fixed hex value, not a variable that flips - so
+ * without this, browsers that auto-invert unlabeled pages for a device set to
+ * dark mode (Android Chrome's "force dark", desktop Chrome/Edge's own toggle)
+ * repaint it with their own contrast heuristic. That repaint happens at the
+ * compositor, invisible to `getComputedStyle`, and on this design it lands as
+ * near-black text on a near-black background: the page reads as empty. This
+ * tells the browser the page already declares its own colors, so it leaves
+ * them alone.
+ */
 export const viewport: Viewport = {
   themeColor: '#ffffff',
+  colorScheme: 'light',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',

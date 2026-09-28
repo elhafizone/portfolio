@@ -29,8 +29,27 @@ export function Preloader({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     if (!mounted) return;
 
+    /*
+      Every early return below used to call `onDone()` and stop there. That
+      unblocks the hero's entrance timeline, but it never touches THIS
+      component's own markup — a `fixed inset-0 z-[100]` opaque sheet that
+      React never unmounts (SiteShell renders `<Preloader>` unconditionally).
+      With nothing to hide it, it just sat on screen forever: the page
+      underneath was there, correctly rendered, entirely invisible behind a
+      white rectangle. Every bail-out now hides the node itself, not just the
+      callback.
+    */
+    const hide = () => {
+      const root = rootRef.current;
+      if (!root) return;
+      root.style.transition = 'none';
+      root.style.visibility = 'hidden';
+      root.style.pointerEvents = 'none';
+    };
+
     if (reduced) {
       onDone();
+      hide();
       return;
     }
 
@@ -40,6 +59,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
     try {
       if (sessionStorage.getItem('intro-seen')) {
         onDone();
+        hide();
         return;
       }
       sessionStorage.setItem('intro-seen', '1');
@@ -52,6 +72,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
     const count = countRef.current;
     if (!root || !bar || !count) {
       onDone();
+      hide();
       return;
     }
 

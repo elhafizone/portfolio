@@ -164,6 +164,17 @@
   .section {
     padding-block: var(--section-y);
     position: relative;
+    /*
+      Matches HEADER_OFFSET in config/motion.ts. That constant only clears the
+      fixed header for an in-app Lenis-driven scroll (a nav click) — Lenis
+      does not read scroll-margin-top. A direct load of a hash URL (a shared
+      link, a bookmark, a refresh while scrolled to a section) never runs
+      that JS at all; the browser's native anchor-jump does, and it aligns
+      the section's top edge with the viewport's top edge, landing the
+      section's heading underneath the header. This is what clears THAT case.
+      Keep both in sync if the header's height ever changes.
+    */
+    scroll-margin-top: 92px;
   }
 
   /* Micro label: mono, tracked out, tiny. The editorial signature detail. */

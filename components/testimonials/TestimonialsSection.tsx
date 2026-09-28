@@ -59,16 +59,6 @@ export function TestimonialsSection() {
           ))}
         </ul>
       </div>
-
-      {/* Standing disclosure */}
-      <div className="shell mt-10">
-        <p
-          data-fade
-          className="max-w-2xl border-s-2 border-accent ps-4 text-sm leading-relaxed text-ink-body"
-        >
-          {t.reviews.translationNote}
-        </p>
-      </div>
     </section>
   );
 }

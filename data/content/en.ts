@@ -247,8 +247,6 @@ export const en = {
     title: ['What clients', 'say.'],
     intro: 'Written by the clients themselves, after their projects were delivered.',
     translation: 'Translation',
-    translationNote:
-      'Each review is quoted in the client’s own words. The English beneath it is a translation.',
   },
 
   about: {

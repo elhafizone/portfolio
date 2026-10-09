@@ -93,11 +93,17 @@ export const formConfig = {
   maxMessageLength: 2000,
 } as const;
 
-/** Analytics is an opt-in integration point. Nothing loads unless an ID is set. */
+/**
+ * Google Analytics 4. The measurement ID is public by design (it ships in every
+ * page's HTML), so it lives here as the default; NEXT_PUBLIC_ANALYTICS_ID
+ * overrides it, and setting that to an empty string is not a way to disable —
+ * remove `defaultAnalyticsId` for that.
+ */
+const defaultAnalyticsId = 'G-FYXW2BQ8S3';
+
 export const analyticsConfig = {
-  /** TODO: set NEXT_PUBLIC_ANALYTICS_ID to enable. */
-  id: process.env.NEXT_PUBLIC_ANALYTICS_ID ?? '',
-  enabled: Boolean(process.env.NEXT_PUBLIC_ANALYTICS_ID),
+  id: process.env.NEXT_PUBLIC_ANALYTICS_ID || defaultAnalyticsId,
+  enabled: Boolean(process.env.NEXT_PUBLIC_ANALYTICS_ID || defaultAnalyticsId),
 } as const;
 
 export const navLinks = [

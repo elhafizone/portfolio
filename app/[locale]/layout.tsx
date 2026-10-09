@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import { Almarai, Instrument_Serif, Inter_Tight, JetBrains_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
+import Script from 'next/script';
 
 import { LocaleProvider } from '@/components/i18n/LocaleProvider';
 import { SiteShell } from '@/components/layout/SiteShell';
-import { contactConfig, siteConfig } from '@/config/site';
+import { analyticsConfig, contactConfig, siteConfig } from '@/config/site';
 import { getDictionary } from '@/data/content';
 import { profile } from '@/data/profile';
 import {
@@ -236,6 +237,17 @@ export default async function LocaleLayout({
         the tree are still reported.
       */}
       <body suppressHydrationWarning>
+        {analyticsConfig.enabled && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${analyticsConfig.id}`}
+              strategy="afterInteractive"
+            />
+            <Script id="gtag-init" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${analyticsConfig.id}');`}
+            </Script>
+          </>
+        )}
         <LocaleProvider locale={locale} dictionary={dictionary}>
           <SiteShell>{children}</SiteShell>
         </LocaleProvider>

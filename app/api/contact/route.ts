@@ -12,7 +12,8 @@ export const dynamic = 'force-dynamic';
  * payload and hands it to whichever delivery provider is configured through
  * environment variables:
  *
- *   RESEND_API_KEY + CONTACT_TO_EMAIL   -> sends via Resend
+ *   RESEND_API_KEY + CONTACT_TO_EMAIL   -> sends via Resend (TO may list several
+ *                                          addresses, comma-separated)
  *   CONTACT_WEBHOOK_URL                 -> POSTs the JSON payload
  *
  * With neither configured it returns 501 and says so plainly. It never returns
@@ -58,7 +59,12 @@ function renderEmail(payload: ContactPayload) {
 
 async function deliver(payload: ContactPayload): Promise<DeliveryResult> {
   const resendKey = process.env.RESEND_API_KEY;
-  const to = process.env.CONTACT_TO_EMAIL;
+  // Comma-separated: every address gets the enquiry, so one lost mailbox
+  // (spam folder, unread webmail) does not mean a lost client.
+  const to = (process.env.CONTACT_TO_EMAIL ?? '')
+    .split(',')
+    .map((address) => address.trim())
+    .filter(Boolean);
   const from = process.env.CONTACT_FROM_EMAIL ?? 'onboarding@resend.dev';
 
   /*
@@ -70,7 +76,7 @@ async function deliver(payload: ContactPayload): Promise<DeliveryResult> {
     hit an unhandled server error instead of "could not be delivered, try
     again". A provider outage is an expected condition here, not a crash.
   */
-  if (resendKey && to) {
+  if (resendKey && to.length > 0) {
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -80,7 +86,7 @@ async function deliver(payload: ContactPayload): Promise<DeliveryResult> {
         },
         body: JSON.stringify({
           from,
-          to: [to],
+          to,
           reply_to: payload.email,
           subject: `New enquiry - ${payload.projectType} - ${payload.name}`,
           text: renderEmail(payload),

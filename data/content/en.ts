@@ -29,6 +29,7 @@ export const en = {
     links: [
       { label: 'Work', href: '#work' },
       { label: 'Services', href: '#services' },
+      { label: 'Articles', href: '#articles' },
       { label: 'About', href: '#about' },
       { label: 'Reviews', href: '#reviews' },
       { label: 'Contact', href: '#contact' },

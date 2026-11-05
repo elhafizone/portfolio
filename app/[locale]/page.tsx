@@ -1,4 +1,5 @@
 import { AboutSection } from '@/components/about/AboutSection';
+import { ArticlesSection } from '@/components/articles/ArticlesSection';
 import { ContactSection } from '@/components/contact/ContactSection';
 import { ExperienceSection } from '@/components/experience/ExperienceSection';
 import { ExpertiseSection } from '@/components/expertise/ExpertiseSection';
@@ -11,7 +12,7 @@ import { TestimonialsSection } from '@/components/testimonials/TestimonialsSecti
 
 /**
  * Section order follows the hierarchy the site is arguing for:
- * work first, then expertise, then credibility, then personality, then contact.
+ * work first, then expertise, then credibility, insights, personality, then contact.
  */
 export default function HomePage() {
   return (
@@ -24,6 +25,7 @@ export default function HomePage() {
       <ExperienceSection />
       <ProcessSection />
       <TestimonialsSection />
+      <ArticlesSection />
       <AboutSection />
       <ContactSection />
     </>

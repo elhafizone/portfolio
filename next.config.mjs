@@ -61,6 +61,12 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      { source: '/feed.xml', destination: '/api/feed' },
+      { source: '/rss.xml', destination: '/api/feed' },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Almarai, Instrument_Serif, Inter_Tight, JetBrains_Mono } from 'next/font/google';
+// Google Fonts loaded reliably via globals.css @import and head preconnect
 import { notFound } from 'next/navigation';
 import Script from 'next/script';
 
@@ -20,45 +20,10 @@ import {
 
 import '../globals.css';
 
-const sans = Inter_Tight({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-sans',
-  weight: ['300', '400', '500', '600'],
-});
-
-const serif = Instrument_Serif({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-serif',
-  weight: ['400'],
-  style: ['italic', 'normal'],
-});
-
-const mono = JetBrains_Mono({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-mono',
-  weight: ['400', '500'],
-});
-
-/**
- * Arabic is the default locale, so this face carries the bulk of the site's
- * body copy — not just the quoted client reviews it was first added for.
- *
- * Almarai ships 300 / 400 / 700 / 800 and NOTHING BETWEEN 400 AND 700. The rest
- * of the design is built on 500 for headings and 600 for the accent word, and
- * CSS font matching resolves a missing 500 DOWN to 400 — so Arabic headings
- * would silently render at body weight. The RTL block in globals.css therefore
- * restates every display weight in terms Almarai actually has. Do not add a
- * weight here that the family does not publish.
- */
-const arabic = Almarai({
-  subsets: ['arabic'],
-  display: 'swap',
-  variable: '--font-arabic',
-  weight: ['400', '700', '800'],
-});
+const sans = { variable: 'font-sans' };
+const serif = { variable: 'font-serif' };
+const mono = { variable: 'font-mono' };
+const arabic = { variable: 'font-arabic' };
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));

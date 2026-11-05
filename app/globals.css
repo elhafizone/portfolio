@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,6 +10,10 @@
 
 @layer base {
   :root {
+    --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-serif: 'Instrument Serif', Georgia, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-arabic: 'Almarai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif;
     /* Surfaces */
     --paper: #ffffff;
     --surface: #f7f7f4;
@@ -20,7 +25,7 @@
       Every tier here clears WCAG AA for small text (4.5:1 on white).
 
       --ink-faint used to be #a8a8a2, which is 2.4:1. It was documented as
-      "decorative only", but it was in fact carrying real text — the contact
+      "decorative only", but it was in fact carrying real text â€” the contact
       email, the "Optional" field hint, the channel labels, the step counters.
       A 2.4:1 email address is not decorative, it is an unreadable email address.
     */
@@ -166,7 +171,7 @@
     position: relative;
     /*
       Matches HEADER_OFFSET in config/motion.ts. That constant only clears the
-      fixed header for an in-app Lenis-driven scroll (a nav click) — Lenis
+      fixed header for an in-app Lenis-driven scroll (a nav click) â€” Lenis
       does not read scroll-margin-top. A direct load of a hash URL (a shared
       link, a bookmark, a refresh while scrolled to a section) never runs
       that JS at all; the browser's native anchor-jump does, and it aligns
@@ -409,7 +414,7 @@
 
 /*
   `font-medium` is Tailwind's 500, used across the site wherever something needs
-  to sit a step above body text — buttons, quotations, the opening line of the
+  to sit a step above body text â€” buttons, quotations, the opening line of the
   bio. Almarai has no 500, so all of it was resolving to plain 400 and that
   emphasis simply vanished in Arabic. 700 is the next weight the family actually
   ships, and it is the conventional Arabic counterpart to a Latin medium:
@@ -469,12 +474,12 @@
 
   The three items are set in the MONOSPACE label face, so every character costs
   the same width and lowercasing saves nothing. The English strings run ~60%
-  longer than the Arabic ones — measured at 375px they need 451px against 335px
+  longer than the Arabic ones â€” measured at 375px they need 451px against 335px
   available and push a horizontal scrollbar onto the page. Arabic fits with room
   to spare.
 
   So the decorative credit is dropped on small LTR screens only. The two items
-  that carry information — the copyright and the back-to-top control — are never
+  that carry information â€” the copyright and the back-to-top control â€” are never
   dropped, in either language.
 */
 @media (max-width: 639px) {

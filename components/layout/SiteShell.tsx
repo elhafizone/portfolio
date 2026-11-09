@@ -5,6 +5,7 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 import { Footer } from '@/components/layout/Footer';
 import { Navbar } from '@/components/layout/Navbar';
 import { MotionProvider } from '@/components/motion/MotionProvider';
+import { OriCompanion } from '@/components/ori/OriCompanion';
 import { Cursor } from '@/components/ui/Cursor';
 import { Preloader } from '@/components/ui/Preloader';
 
@@ -31,6 +32,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
         <Navbar />
         <main id="main">{children}</main>
         <Footer />
+        <OriCompanion active={introDone} />
       </IntroContext.Provider>
     </MotionProvider>
   );

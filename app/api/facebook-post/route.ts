@@ -7,6 +7,10 @@ import { siteConfig } from '@/config/site';
  * Publishes an article or custom post directly to the Facebook Page
  * via Meta Graph API v21.0.
  */
+export async function GET(req: NextRequest) {
+  return POST(req);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization');

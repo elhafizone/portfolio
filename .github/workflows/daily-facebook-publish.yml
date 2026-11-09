@@ -1,0 +1,24 @@
+name: Daily Facebook Auto-Publish
+
+on:
+  schedule:
+    # Runs everyday at 08:00 UTC (10:00 AM Cairo time)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish Daily Post to Facebook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Facebook Daily Publish API
+        run: |
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X GET "https://hafizone.dev/api/cron/facebook-publish?secret=hafizone_autopublish_secret_key_2026")
+          BODY=$(echo "$RESPONSE" | sed -e '$d')
+          STATUS=$(echo "$RESPONSE" | tail -n1 | cut -d: -f2)
+          echo "Response Body: $BODY"
+          echo "HTTP Status: $STATUS"
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Failed to publish post to Facebook"
+            exit 1
+          fi

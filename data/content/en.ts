@@ -376,6 +376,33 @@ export const en = {
     body: 'The link may be out of date, or the page may have moved.',
     cta: 'Back to the homepage',
   },
+  ori: {
+    talk: 'Talk to ORI',
+    close: 'Close',
+    dialogLabel: 'ORI, the site guide',
+    greeting: "Hey, I'm ORI. Looking for something specific?",
+    chips: {
+      store: 'I want an online store',
+      clinic: 'A site for a clinic or business',
+      brand: 'A site for my brand',
+      work: 'Show me your work',
+    },
+    replies: {
+      store: 'Online stores are my thing: WooCommerce, from the product page to checkout.',
+      clinic: 'Have a look at these two clinic sites; they are close to what you need.',
+      brand: 'Haboob is a good example: an oud brand with a strong Arabic identity.',
+      work: 'Here is the selected work. Have a look around.',
+    },
+    placeholder: 'Ask me about your project…',
+    send: 'Send',
+    empty: 'Write your question first',
+    privacy: 'Your message is processed by AI and not stored.',
+    thinking: 'Thinking…',
+    fallback: "I couldn't answer that just now. These might help:",
+    limit: "That's a lot of questions for now. Pick one of these, or come back in a little while:",
+    open: { project: 'View project', service: 'See the service' },
+    cardKind: { project: 'Project', service: 'Service' },
+  },
 };
 
 /**

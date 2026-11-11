@@ -214,7 +214,7 @@ export default async function LocaleLayout({
           </>
         )}
         <LocaleProvider locale={locale} dictionary={dictionary}>
-          <SiteShell>{children}</SiteShell>
+          <SiteShell oriAi={Boolean(process.env.ANTHROPIC_API_KEY)}>{children}</SiteShell>
         </LocaleProvider>
       </body>
     </html>

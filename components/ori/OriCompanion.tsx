@@ -253,10 +253,10 @@ export function OriCompanion({ active }: { active: boolean }) {
           roam.nextAt = clock.elapsedTime + 1.5;
         }),
         oriOn<FlyTo>('fly-to', (d) => {
+          // the guide has already started the (Lenis) scroll; fly once the section has settled
           const el = d && document.querySelector(d.selector);
-          if (!el) return;
-          el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-          window.setTimeout(() => flyBeside(el, (d.clip as ClipName) ?? 'Point', 'curious'), 700);
+          if (!el || reduced) return;
+          window.setTimeout(() => flyBeside(el, (d.clip as ClipName) ?? 'Point', 'curious'), 900);
         }),
         oriOn('think', () => {
           setMood('thoughtful', 6);

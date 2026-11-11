@@ -5,7 +5,19 @@ import type { Mesh, MeshStandardMaterial, WebGLRenderer } from 'three';
 
 import { faceWeights, lidTopWeights, type ExpressionName, type Weights } from '@/components/ori/oriControls';
 import { oriEmit, oriOn, type FlyTo } from '@/lib/ori/bus';
-import { bounds, clampTo, pickWaypoint, stepRoam, type RoamState, type Vec } from '@/lib/ori/roam';
+import {
+  arcPoint,
+  bounds,
+  clampTo,
+  dwell,
+  makeWander,
+  pickWaypoint,
+  planTrip,
+  stepRoam,
+  type RoamState,
+  type Trip,
+  type Vec,
+} from '@/lib/ori/roam';
 
 /**
  * ORI, the site's 3D companion (Level 2: roaming + guide hooks).
@@ -210,6 +222,9 @@ export function OriCompanion({ active }: { active: boolean }) {
       const start = corner();
       let roam: RoamState = { pos: start, vel: { x: 0, y: 0 }, target: start, nextAt: 2.5 };
       let lastScroll = window.scrollY;
+      let trip: Trip | null = null; // the current curved trip while roaming
+      let lastDir: Vec | undefined; // last trip's heading, so the next one doesn't double back
+      const wander = makeWander(Math.random);
       const place = (p: Vec, bank = 0) => {
         wrap.style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0) rotate(${bank.toFixed(2)}deg)`;
       };
@@ -222,6 +237,7 @@ export function OriCompanion({ active }: { active: boolean }) {
         const b = bounds(view(), boxSize(), navH());
         roam.target = clampTo(b, { x: rtl() ? b.minX : b.maxX, y: r.top - boxSize().h * 0.25 });
         mode = 'fly';
+        trip = null;
         pending = { clip, mood: m, until: clock.elapsedTime + 2.5 };
       };
 
@@ -245,6 +261,7 @@ export function OriCompanion({ active }: { active: boolean }) {
       const offs = [
         oriOn('open', () => {
           mode = 'park';
+          trip = null;
           pending = null;
           setMood('happy', 2.4);
           play('Wave', 0);
@@ -354,18 +371,25 @@ export function OriCompanion({ active }: { active: boolean }) {
             roam.nextAt = t + 3.5; // hold beside the section, then wander again
             mode = 'roam';
           }
+        } else if (trip) {
+          // follow the curved path; the spring below smooths it further
+          roam.target = arcPoint(trip, t);
+          if (t >= trip.start + trip.dur) {
+            lastDir = { x: trip.to.x - trip.from.x, y: trip.to.y - trip.from.y };
+            trip = null;
+            roam.nextAt = t + dwell(Math.random, v.mobile);
+          }
         } else if (t > roam.nextAt && !current) {
-          let next = pickWaypoint(v, box, navH(), roam.pos, Math.random);
+          let next = pickWaypoint(v, box, navH(), roam.pos, Math.random, lastDir);
           const avoid = hoverEl?.getBoundingClientRect();
           if (avoid) {
             for (let i = 0; i < 4; i++) {
               const hitsIt = next.x < avoid.right && next.x + box.w > avoid.left && next.y < avoid.bottom && next.y + box.h > avoid.top;
               if (!hitsIt) break;
-              next = pickWaypoint(v, box, navH(), roam.pos, Math.random);
+              next = pickWaypoint(v, box, navH(), roam.pos, Math.random, lastDir);
             }
           }
-          roam.target = next;
-          roam.nextAt = t + (v.mobile ? 7 + Math.random() * 5 : 4 + Math.random() * 4);
+          trip = planTrip(roam.pos, next, t, Math.random, v.mobile);
         }
         roam.target = clampTo(b, roam.target);
         roam = stepRoam(roam, dt, scrollDelta, t, {
@@ -377,7 +401,9 @@ export function OriCompanion({ active }: { active: boolean }) {
         if (clamped.y !== roam.pos.y) roam.vel.y = 0;
         if (clamped.x !== roam.pos.x) roam.vel.x = 0;
         roam.pos = clamped;
-        place(roam.pos, Math.max(-8, Math.min(8, roam.vel.x * 0.02)));
+        // the never-repeating float on top (small while parked so the bubble stays anchored)
+        const wob = wander(t, mode === 'park' ? 4 : v.mobile ? 10 : 22);
+        place(clampTo(b, { x: roam.pos.x + wob.x, y: roam.pos.y + wob.y }), Math.max(-8, Math.min(8, roam.vel.x * 0.02)));
 
         if (current && t > busyUntil) backToIdle();
         if (t > moodUntil) mood = 'neutral';

@@ -74,7 +74,7 @@ export function Hero() {
       ref={rootRef}
       id="top"
       aria-labelledby="hero-heading"
-      className="relative flex min-h-[100svh] flex-col justify-between overflow-hidden pb-8 pt-24 sm:pt-28 lg:h-[100svh] lg:min-h-[620px] lg:pb-6 lg:pt-28"
+      className="relative flex min-h-[100svh] flex-col justify-between overflow-hidden pb-8 pt-24 sm:pt-28 lg:h-[100svh] lg:min-h-[540px] lg:pb-5 lg:pt-24"
     >
       {/* the waves are gone: ORI, leaning out of the hero's bottom edge, is the hero now */}
       <RippleField calm />
@@ -107,16 +107,16 @@ export function Hero() {
                 </>,
                 t.hero.headline[2],
               ]}
-              className="mega !text-[clamp(2.6rem,5.2vw,5.6rem)]"
+              className="mega !text-[clamp(2.3rem,min(5.2vw,9vh),5.6rem)]"
             />
           </div>
 
           <div data-hero-layer="copy" className="w-full">
-            <p data-hero="intro" className="lead mt-6 max-w-xl lg:mt-7">
+            <p data-hero="intro" className="lead mt-5 max-w-xl lg:mt-[min(1.75rem,3vh)]">
               {t.hero.intro}
             </p>
 
-            <div data-hero="cta" className="mt-7 flex flex-col items-start gap-3 sm:flex-row lg:mt-8">
+            <div data-hero="cta" className="mt-6 flex flex-col items-start gap-3 sm:flex-row lg:mt-[min(2rem,3.5vh)]">
               <span data-fade className="pointer-events-auto">
                 <Button href="#work" cursorLabel="VIEW" withArrow>
                   {t.hero.primaryCta}

@@ -256,7 +256,11 @@ export function OriCompanion({ active }: { active: boolean }) {
           const w = h * ASPECT;
           return { x: rtl() ? 6 : window.innerWidth - w - 6, y: s - h * handFrac, h };
         }
-        const h = Math.min(window.innerHeight * 1.05, Math.max(260, (s - r.top) / Math.max(0.3, handFrac)));
+        // as big as the window allows: the crest just under the navbar, the body no wider than the column
+        const HEAD = 0.17; // the crest tip, as a fraction of the box height from its top
+        const byHeight = (s - navH() - 20) / Math.max(0.2, handFrac - HEAD);
+        const byWidth = (r.width * 2) / ASPECT; // the box is about twice as wide as the body inside it
+        const h = Math.max(300, Math.min(byHeight, byWidth));
         return { x: r.left + r.width / 2 - (h * ASPECT) / 2, y: s - h * handFrac, h };
       };
       const atTop = () => window.scrollY < 40;

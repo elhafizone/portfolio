@@ -402,6 +402,7 @@ export const en = {
     limit: "That's a lot of questions for now. Pick one of these, or come back in a little while:",
     open: { project: 'View project', service: 'See the service' },
     cardKind: { project: 'Project', service: 'Service' },
+    likedWork: 'Did you like the work?',
   },
 };
 

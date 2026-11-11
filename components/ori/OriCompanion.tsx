@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+
+import { useLocale } from '@/components/i18n/LocaleProvider';
 import type { Mesh, MeshStandardMaterial, WebGLRenderer } from 'three';
 
 import { faceWeights, lidTopWeights, type ExpressionName, type Weights } from '@/components/ori/oriControls';
@@ -59,6 +61,10 @@ const LEAN: Record<string, [number, number, number]> = {
 
 export function OriCompanion({ active }: { active: boolean }) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const sayRef = useRef<HTMLDivElement>(null);
+  const { t: copy } = useLocale();
+  const likedWork = useRef(copy.ori.likedWork);
+  likedWork.current = copy.ori.likedWork;
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -244,6 +250,7 @@ export function OriCompanion({ active }: { active: boolean }) {
       const normalH = () => Math.min(250, Math.max(140, window.innerWidth * 0.19));
       const ASPECT = 208 / 250;
       let size = normalH(); // current box height, px (width follows ASPECT)
+      let winH = 0; // ORI's height in the window, fixed while the hero scrolls away
       let handFrac = 0.55; // where the hands are, as a fraction of the box height (measured each frame)
       /** ORI's pose in the window: big enough to fill it, hands resting on the sill. */
       const windowPose = (): Pose | null => {
@@ -258,13 +265,24 @@ export function OriCompanion({ active }: { active: boolean }) {
         }
         // as big as the window allows: the crest just under the navbar, the body no wider than the column
         const HEAD = 0.17; // the crest tip, as a fraction of the box height from its top
-        const byHeight = (s - navH() - 20) / Math.max(0.2, handFrac - HEAD);
-        const byWidth = (r.width * 2) / ASPECT; // the box is about twice as wide as the body inside it
-        const h = Math.max(300, Math.min(byHeight, byWidth));
+        // size from the hero as it sits on screen at the top; scrolling the hero away must not shrink ORI
+        const heroBottom = winEl()?.closest('section')?.getBoundingClientRect().bottom ?? 0;
+        if (heroBottom >= window.innerHeight - 2 || window.scrollY < 2 || !winH) {
+          const byHeight = (s - navH() - 20) / Math.max(0.2, handFrac - HEAD);
+          const byWidth = (r.width * 2) / ASPECT; // the box is about twice as wide as the body inside it
+          winH = Math.max(300, Math.min(byHeight, byWidth));
+        }
+        const h = winH;
         return { x: r.left + r.width / 2 - (h * ASPECT) / 2, y: s - h * handFrac, h };
       };
       const atTop = () => window.scrollY < 40;
-      const pastWindow = () => window.scrollY > 90;
+      // the visitor has been through the work: its section's end is well up the screen
+      const worksDone = () => {
+        const w = document.getElementById('work');
+        return !!w && w.getBoundingClientRect().bottom < window.innerHeight * 0.55;
+      };
+      let askLiked = true; // "did you like the work?" once per visit
+      let sayUntil = 0;
       let leap: Leap | null = null;
       let leapTo: Pose | null = null; // fixed destination when leaping out
       let lean = 0; // 0..1 how much the arms lean on the sill
@@ -449,15 +467,27 @@ export function OriCompanion({ active }: { active: boolean }) {
         const sillY = sill();
         const wp = windowPose();
 
-        if (mode === 'window' && (!wp || pastWindow())) {
-          // the visitor scrolled on: jump out of the window into the page
+        if (mode === 'window' && !wp) {
+          mode = 'roam'; // a page without the hero window
+        } else if (mode === 'window' && worksDone()) {
+          // ORI stayed in the window (it scrolled away with the hero) while the visitor looked at
+          // the work; now it drops in from the top of the screen, to the inline-end side of the text
           const nh = normalH();
           const b0 = bounds(v, { w: nh * ASPECT, h: nh }, navH());
-          const right = roam.pos.x + (size * ASPECT) / 2 > v.w / 2;
-          leapTo = { x: right ? b0.maxX - Math.random() * v.w * 0.12 : b0.minX + Math.random() * v.w * 0.12, y: b0.maxY - Math.random() * v.h * 0.25, h: nh };
-          leap = planLeap('out', { x: roam.pos.x, y: roam.pos.y, h: size }, t, v.h, scrollSpeed / 3000, Math.random);
+          const along = 0.12 + Math.random() * 0.22;
+          leapTo = {
+            x: rtl() ? b0.minX + along * (b0.maxX - b0.minX) : b0.maxX - along * (b0.maxX - b0.minX),
+            y: b0.minY + (0.2 + Math.random() * 0.2) * (b0.maxY - b0.minY),
+            h: nh,
+          };
+          leap = planLeap('out', { x: leapTo.x + (Math.random() - 0.5) * 60, y: -nh - 30, h: nh }, t, v.h, 0, Math.random);
+          leap.t0 = t; // no crouch: it is falling, not jumping
+          leap.crouch = 0.001;
+          leap.apex = -v.h * 0.04; // a little overshoot past the landing, then it settles up
+          leap.dur = 0.95 + Math.random() * 0.25;
+          size = nh;
           mode = 'leap';
-          setMood('excited', 1.6);
+          setMood('surprised', 1);
         } else if ((mode === 'roam' || mode === 'fly') && wp && atTop() && !reduced) {
           // back at the top: jump back into the window
           leapTo = null;
@@ -503,6 +533,14 @@ export function OriCompanion({ active }: { active: boolean }) {
                 roam.target = { ...roam.pos };
                 roam.nextAt = t + 1.2;
                 setMood('happy', 2);
+                if (askLiked) {
+                  // "did you like the work?" for five seconds; ORI stays put while it is up
+                  askLiked = false;
+                  sayUntil = t + 5;
+                  roam.nextAt = t + 5.6;
+                  setMood('curious', 5);
+                  if (sayRef.current) sayRef.current.textContent = likedWork.current;
+                }
               }
               leap = null;
             }
@@ -623,6 +661,17 @@ export function OriCompanion({ active }: { active: boolean }) {
         // the seed glows with its clip-driven FX bone (x = emissive intensity relative to 0.4)
         if (seedGlow && seedMat) seedMat.emissiveIntensity = seedGlow.scale.x / 0.4;
 
+        // the speech bubble rides above ORI's head
+        const say = sayRef.current;
+        if (say) {
+          const on = t < sayUntil;
+          if (on) {
+            const bx = boxSize();
+            say.style.transform = `translate3d(${(roam.pos.x + bx.w / 2).toFixed(1)}px, ${(roam.pos.y + bx.h * 0.1).toFixed(1)}px, 0) translate(-50%, -100%)`;
+          }
+          if ((say.style.opacity === '1') !== on) say.style.opacity = on ? '1' : '0';
+        }
+
         // where the hands are in the box, so the window pose puts them right on the sill
         if (handL && handR && mode === 'window') {
           ori.updateMatrixWorld(true);
@@ -694,6 +743,16 @@ export function OriCompanion({ active }: { active: boolean }) {
   }, [active]);
 
   return (
+    <>
+    {/* ORI's one-off speech bubble ("did you like the work?"), positioned by the frame loop */}
+    <div
+      ref={sayRef}
+      role="status"
+      aria-live="polite"
+      data-ori-say
+      style={{ opacity: 0, transition: 'opacity .35s ease' }}
+      className="pointer-events-none fixed left-0 top-0 z-50 max-w-[16rem] whitespace-nowrap rounded-2xl border border-[var(--rule)] bg-[var(--paper)] px-4 py-2.5 text-[0.95rem] font-medium text-[var(--ink)] shadow-[0_14px_40px_-18px_rgba(13,13,13,0.35)]"
+    />
     <div
       ref={wrapRef}
       aria-hidden="true"
@@ -705,5 +764,6 @@ export function OriCompanion({ active }: { active: boolean }) {
           "Talk to ORI" button in OriGuide */}
       <canvas ref={canvasRef} data-ori-canvas className="relative block h-full w-full" />
     </div>
+    </>
   );
 }

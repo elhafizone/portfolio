@@ -393,5 +393,6 @@ export const ar: Dictionary = {
     limit: 'أسئلة كثيرة الحين، اختر واحد من هذي أو ارجع بعد شوي:',
     open: { project: 'شاهد المشروع', service: 'تفاصيل الخدمة' },
     cardKind: { project: 'مشروع', service: 'خدمة' },
+    likedWork: 'هل أعجبتك الأعمال؟',
   },
 };

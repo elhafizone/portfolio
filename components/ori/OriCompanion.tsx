@@ -55,8 +55,8 @@ const YAW = 0.32; // ORI turns towards the page: +YAW faces right, -YAW faces le
 const LEAN: Record<string, [number, number, number]> = {
   // shoulders: -X swings the arm forward, Z brings it in towards the body (mirrored per side);
   // found by rendering each axis (rendered per axis while tuning). Elbows and hands keep the clip's pose.
-  Shoulder_L: [-0.8, 0, 0.3],
-  Shoulder_R: [-0.8, 0, -0.3],
+  Shoulder_L: [-0.95, 0, -0.12],
+  Shoulder_R: [-0.95, 0, 0.12],
 };
 
 export function OriCompanion({ active }: { active: boolean }) {
@@ -250,7 +250,22 @@ export function OriCompanion({ active }: { active: boolean }) {
       const normalH = () => Math.min(250, Math.max(140, window.innerWidth * 0.19));
       const ASPECT = 208 / 250;
       let size = normalH(); // current box height, px (width follows ASPECT)
-      let winH = 0; // ORI's height in the window, fixed while the hero scrolls away
+      let winH = 0; // ORI's height in the window: measured once, then fixed (no jitter)
+      let winKey = '';
+      /** Where the hands sit in the box when leaning (a fraction of its height), measured in one go. */
+      const measureHands = () => {
+        if (!handL || !handR) return;
+        const saved = arms.map((a) => a.bone.quaternion.clone());
+        for (const a of arms) {
+          const [ex, ey, ez] = LEAN[a.name] ?? [0, 0, 0];
+          a.bone.quaternion.copy(a.rest).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(ex, ey, ez)));
+        }
+        ori.updateMatrixWorld(true);
+        const hl = new THREE.Vector3().setFromMatrixPosition(handL.matrixWorld).project(camera);
+        const hr = new THREE.Vector3().setFromMatrixPosition(handR.matrixWorld).project(camera);
+        handFrac = Math.min(0.85, Math.max(0.3, (1 - (hl.y + hr.y) / 2) / 2 + 0.012)); // hands just above the sill
+        arms.forEach((a, i) => a.bone.quaternion.copy(saved[i]));
+      };
       let handFrac = 0.55; // where the hands are, as a fraction of the box height (measured each frame)
       /** ORI's pose in the window: big enough to fill it, hands resting on the sill. */
       const windowPose = (): Pose | null => {
@@ -267,7 +282,11 @@ export function OriCompanion({ active }: { active: boolean }) {
         const HEAD = 0.17; // the crest tip, as a fraction of the box height from its top
         // size from the hero as it sits on screen at the top; scrolling the hero away must not shrink ORI
         const heroBottom = winEl()?.closest('section')?.getBoundingClientRect().bottom ?? 0;
-        if (heroBottom >= window.innerHeight - 2 || window.scrollY < 2 || !winH) {
+        const key = `${window.innerWidth}x${window.innerHeight}`;
+        // measured once per viewport size, while the hero is on screen; never re-measured per frame
+        if (!winH || (key !== winKey && (heroBottom >= window.innerHeight - 2 || window.scrollY < 2))) {
+          winKey = key;
+          measureHands();
           const byHeight = (s - navH() - 20) / Math.max(0.2, handFrac - HEAD);
           const byWidth = (r.width * 2) / ASPECT; // the box is about twice as wide as the body inside it
           winH = Math.max(300, Math.min(byHeight, byWidth));
@@ -282,13 +301,17 @@ export function OriCompanion({ active }: { active: boolean }) {
         return !!w && w.getBoundingClientRect().bottom < window.innerHeight * 0.55;
       };
       let askLiked = true; // "did you like the work?" once per visit
+      let exitUp = false; // the current leap is ORI leaving upwards, back to the window
       let sayUntil = 0;
       let leap: Leap | null = null;
       let leapTo: Pose | null = null; // fixed destination when leaping out
       let lean = 0; // 0..1 how much the arms lean on the sill
       let rise = 0; // 0..1 the first peek up from behind the sill
       let scrollSpeed = 0;
-      if (winEl() && atTop() && !reduced) mode = 'window';
+      if (winEl() && atTop() && !reduced) {
+        mode = 'window';
+        lean = 1;
+      }
       let pending: { clip: ClipName; mood: ExpressionName; until: number } | null = null;
       const start = corner();
       let roam: RoamState = { pos: start, vel: { x: 0, y: 0 }, target: start, nextAt: 2.5 };
@@ -395,6 +418,10 @@ export function OriCompanion({ active }: { active: boolean }) {
         if (!overBody(e.clientX, e.clientY)) return;
         e.preventDefault();
         e.stopPropagation();
+        if (mode === 'window' || mode === 'leap') {
+          if (e.type === 'click') setMood('happy', 1.4); // the hero ORI is not a button
+          return;
+        }
         if (e.type === 'click') oriEmit('open');
       };
       window.addEventListener('pointerdown', onPress, true);
@@ -450,7 +477,7 @@ export function OriCompanion({ active }: { active: boolean }) {
         const want = (window as unknown as { __oriLean?: typeof LEAN }).__oriLean ?? LEAN;
         const leanTarget = mode === 'window' ? 1 : mode === 'leap' && leap && leap.dir === 'in' ? Math.max(0, (leapU(leap, t) - 0.75) / 0.25) : 0;
         lean += (leanTarget - lean) * (1 - Math.exp(-(leanTarget > lean ? 7 : 14) * dt));
-        idle.setEffectiveWeight(1 - lean * 0.85);
+        idle.setEffectiveWeight(1 - lean);
         if (lean > 0.001) {
           for (const a of arms) {
             const [ex, ey, ez] = want[a.name] ?? [0, 0, 0];
@@ -488,14 +515,20 @@ export function OriCompanion({ active }: { active: boolean }) {
           size = nh;
           mode = 'leap';
           setMood('surprised', 1);
-        } else if ((mode === 'roam' || mode === 'fly') && wp && atTop() && !reduced) {
-          // back at the top: jump back into the window
-          leapTo = null;
+        } else if ((mode === 'roam' || mode === 'fly') && wp && !reduced && scrollDelta < -2 && !worksDone()) {
+          // scrolling back up through the work: ORI flies up out of sight and waits in the window
           trip = null;
           pending = null;
-          leap = planLeap('in', { x: roam.pos.x, y: roam.pos.y, h: size }, t, v.h, scrollSpeed / 3000, Math.random);
+          sayUntil = 0;
+          leapTo = { x: roam.pos.x + (Math.random() - 0.5) * 80, y: -size - 80, h: size };
+          leap = planLeap('out', { x: roam.pos.x, y: roam.pos.y, h: size }, t, v.h, 0, Math.random);
+          leap.t0 = t;
+          leap.crouch = 0.001;
+          leap.apex = v.h * 0.04;
+          leap.dur = 0.6 + Math.random() * 0.15;
+          exitUp = true;
           mode = 'leap';
-          setMood('happy', 2);
+          setMood('happy', 1.2);
         }
 
         if (mode === 'window' && wp) {
@@ -503,7 +536,7 @@ export function OriCompanion({ active }: { active: boolean }) {
           rise = Math.min(1, rise + dt / 1.3);
           const up = 1 - (1 - rise) ** 3;
           const w2 = wander(t, 5);
-          size += (wp.h - size) * (1 - Math.exp(-6 * dt));
+          size = wp.h;
           roam.pos = { x: wp.x + w2.x, y: wp.y + w2.y * 0.6 + Math.sin(t * 1.25) * 2.5 + (1 - up) * size * 0.5 };
           roam.vel = { x: 0, y: 0 };
           applySize(size, 10); // resting in the window: ignore small drift, a resize costs a redraw
@@ -525,9 +558,13 @@ export function OriCompanion({ active }: { active: boolean }) {
             clipAt(p.y, p.h, behind ? sillY : null);
             place(roam.pos, p.rot, p.sx, p.sy);
             if (u >= 1 && t > leap.t0) {
-              if (leap.dir === 'in') {
+              if (leap.dir === 'in' || exitUp) {
+                // back in the window, already risen: the hero shows it big when it scrolls into view
+                exitUp = false;
                 mode = 'window';
                 rise = 1;
+                size = winH || size;
+                applySize(size);
               } else {
                 mode = 'roam';
                 roam.target = { ...roam.pos };
@@ -608,7 +645,7 @@ export function OriCompanion({ active }: { active: boolean }) {
 
         if (current && t > busyUntil) backToIdle();
         if (t > moodUntil) mood = 'neutral';
-        if (!reduced && !current && performance.now() - lastActivity > 9000) {
+        if (!reduced && !current && mode !== 'window' && performance.now() - lastActivity > 9000) {
           lastActivity = performance.now();
           play('Look_Around', 0);
         }
@@ -672,14 +709,6 @@ export function OriCompanion({ active }: { active: boolean }) {
           if ((say.style.opacity === '1') !== on) say.style.opacity = on ? '1' : '0';
         }
 
-        // where the hands are in the box, so the window pose puts them right on the sill
-        if (handL && handR && mode === 'window') {
-          ori.updateMatrixWorld(true);
-          const hl = new THREE.Vector3().setFromMatrixPosition(handL.matrixWorld).project(camera);
-          const hr = new THREE.Vector3().setFromMatrixPosition(handR.matrixWorld).project(camera);
-          const f = (1 - (hl.y + hr.y) / 2) / 2 + 0.012; // the hands sit on the sill, just above their pivot
-          handFrac += (Math.min(0.85, Math.max(0.3, f)) - handFrac) * 0.04; // slow: the size must not breathe with the arms
-        }
         renderer.render(scene, camera);
         if (!reduced && !document.hidden) raf = requestAnimationFrame(frame);
       };
@@ -703,7 +732,7 @@ export function OriCompanion({ active }: { active: boolean }) {
 
       if (!reduced) {
         setMood('happy', 2.4);
-        play('Wave', 0);
+        if (mode !== 'window') play('Wave', 0); // in the window it just rises and looks
       }
       frame();
       if (reduced) mode = 'park';

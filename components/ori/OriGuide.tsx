@@ -213,6 +213,8 @@ export default function OriGuide({ aiEnabled }: { aiEnabled: boolean }) {
           aria-modal="false"
           aria-labelledby={titleId}
           dir={dir}
+          // Lenis smooth-scroll would otherwise eat the wheel and the log could never scroll
+          data-lenis-prevent=""
           className="fixed start-3 z-50 flex max-h-[min(560px,calc(100dvh-clamp(140px,19vw,250px)-20px-var(--header-h)))] w-[min(360px,calc(100vw-24px))] flex-col rounded-2xl border border-[var(--rule)] bg-[var(--paper)] text-[0.9375rem] leading-relaxed text-[var(--ink-body)] shadow-[0_18px_50px_-20px_rgba(13,13,13,0.35)] sm:start-5"
           style={{ bottom: 'calc(clamp(140px, 19vw, 250px) + 20px)' }}
         >
@@ -235,7 +237,7 @@ export default function OriGuide({ aiEnabled }: { aiEnabled: boolean }) {
             </button>
           </div>
 
-          <div ref={logRef} aria-live="polite" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
+          <div ref={logRef} aria-live="polite" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 py-3">
             {log.map((turn, i) =>
               turn.who === 'me' ? (
                 <p key={i} className="max-w-[85%] self-end rounded-2xl bg-[var(--accent-wash)] px-3 py-1.5 text-[0.875rem] text-[var(--accent-deep)]">

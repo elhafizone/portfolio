@@ -282,8 +282,8 @@ export function OriCompanion({ active }: { active: boolean }) {
         wrap.style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0) rotate(${bank.toFixed(2)}deg) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
       };
       let appliedH = 0;
-      const applySize = (h: number) => {
-        if (Math.abs(h - appliedH) < 0.5) return;
+      const applySize = (h: number, settle = 0.5) => {
+        if (Math.abs(h - appliedH) < settle) return;
         appliedH = h;
         wrap.style.height = `${h.toFixed(1)}px`;
         wrap.style.width = `${(h * ASPECT).toFixed(1)}px`;
@@ -388,11 +388,17 @@ export function OriCompanion({ active }: { active: boolean }) {
 
       // ---- sizing
       const resize = () => {
-        const { width, height } = canvas.getBoundingClientRect();
+        // layout size, not the transformed (rotated / squashed) box
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
         if (!width || !height) return;
+        // a big ORI in the hero needs fewer device pixels per CSS pixel to stay sharp and light
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2, Math.max(1, 1400 / height)));
         renderer.setSize(width, height, false);
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
+        // resizing clears the canvas: draw again right away so no empty frame is ever shown
+        renderer.render(scene, camera);
       };
       const ro = new ResizeObserver(resize);
       ro.observe(canvas);
@@ -470,8 +476,8 @@ export function OriCompanion({ active }: { active: boolean }) {
           size += (wp.h - size) * (1 - Math.exp(-6 * dt));
           roam.pos = { x: wp.x + w2.x, y: wp.y + w2.y * 0.6 + Math.sin(t * 1.25) * 2.5 + (1 - up) * size * 0.5 };
           roam.vel = { x: 0, y: 0 };
-          applySize(size);
-          clipAt(roam.pos.y, size, sillY);
+          applySize(size, 10); // resting in the window: ignore small drift, a resize costs a redraw
+          clipAt(roam.pos.y, appliedH, sillY);
           place(roam.pos, w2.x * 0.12);
         } else if (mode === 'leap' && leap) {
           const dest = leap.dir === 'in' ? wp : leapTo;
@@ -623,7 +629,7 @@ export function OriCompanion({ active }: { active: boolean }) {
           const hl = new THREE.Vector3().setFromMatrixPosition(handL.matrixWorld).project(camera);
           const hr = new THREE.Vector3().setFromMatrixPosition(handR.matrixWorld).project(camera);
           const f = (1 - (hl.y + hr.y) / 2) / 2 + 0.012; // the hands sit on the sill, just above their pivot
-          handFrac += (Math.min(0.85, Math.max(0.3, f)) - handFrac) * 0.2;
+          handFrac += (Math.min(0.85, Math.max(0.3, f)) - handFrac) * 0.04; // slow: the size must not breathe with the arms
         }
         renderer.render(scene, camera);
         if (!reduced && !document.hidden) raf = requestAnimationFrame(frame);

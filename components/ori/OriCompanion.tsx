@@ -5,6 +5,7 @@ import type { Mesh, MeshStandardMaterial, WebGLRenderer } from 'three';
 
 import { faceWeights, lidTopWeights, type ExpressionName, type Weights } from '@/components/ori/oriControls';
 import { oriEmit, oriOn, type FlyTo } from '@/lib/ori/bus';
+import { leapPose, leapU, planLeap, type Leap, type Pose } from '@/lib/ori/leap';
 import {
   arcPoint,
   bounds,
@@ -47,7 +48,14 @@ const SECTION_REACTIONS: Record<string, { clip: ClipName; mood: ExpressionName }
 const HOLD_CLIPS: ClipName[] = ['Point', 'Present', 'Think', 'Curious', 'Happy', 'Look_At_Target'];
 const INTERACTIVE = 'a, button, [role="button"], input, textarea, select, label, [data-ori-look]';
 const MODEL_URL = '/ori/ORI.glb';
-const YAW = 0.32; // ORI turns towards the page from its corner
+const YAW = 0.32; // ORI turns towards the page: +YAW faces right, -YAW faces left
+/** Arms leaning on the hero's sill: Euler offsets (radians) on top of the rest pose. Tunable via window.__oriLean. */
+const LEAN: Record<string, [number, number, number]> = {
+  // shoulders: -X swings the arm forward, Z brings it in towards the body (mirrored per side);
+  // found by rendering each axis (rendered per axis while tuning). Elbows and hands keep the clip's pose.
+  Shoulder_L: [-0.8, 0, 0.3],
+  Shoulder_R: [-0.8, 0, -0.3],
+};
 
 export function OriCompanion({ active }: { active: boolean }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -118,6 +126,13 @@ export function OriCompanion({ active }: { active: boolean }) {
         if (m.name === 'ORI_MAT_Seed') seedMat = m;
       });
       const upper = ori.getObjectByName('Upper');
+      // arm bones and their rest pose, for the procedural lean on the sill
+      const arms = Object.keys(LEAN).flatMap((name) => {
+        const bone = ori.getObjectByName(name);
+        return bone ? [{ name, bone, rest: bone.quaternion.clone() }] : [];
+      });
+      const handL = ori.getObjectByName('Hand_L');
+      const handR = ori.getObjectByName('Hand_R');
       const seedGlow = ori.getObjectByName('FX_Seed_Glow');
 
       const clock = new THREE.Clock();
@@ -172,7 +187,7 @@ export function OriCompanion({ active }: { active: boolean }) {
       const eyeWorld = new THREE.Vector3();
       const eyeScreen = () => {
         const r = canvas.getBoundingClientRect();
-        eyeWorld.set(0, 0.69, 0.33).applyAxisAngle(new THREE.Vector3(0, 1, 0), YAW);
+        eyeWorld.set(0, 0.69, 0.33).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
         const p = eyeWorld.clone().project(camera);
         return { x: r.left + ((p.x + 1) / 2) * r.width, y: r.top + ((1 - p.y) / 2) * r.height, rect: r };
       };
@@ -216,8 +231,42 @@ export function OriCompanion({ active }: { active: boolean }) {
         const b = bounds(view(), boxSize(), navH());
         return { x: rtl() ? b.maxX : b.minX, y: b.maxY };
       };
-      type Mode = 'roam' | 'park' | 'fly';
+      // window: leaning out of the hero's bottom edge, big · leap: jumping out of / back into it
+      type Mode = 'roam' | 'park' | 'fly' | 'window' | 'leap';
       let mode: Mode = 'roam';
+      let yaw = YAW;
+
+      // ---- the hero window (only on pages whose hero has [data-ori-window])
+      const winEl = () => document.querySelector<HTMLElement>('[data-ori-window]');
+      // the sill is the hero's bottom edge, or the screen's when the hero is taller than the screen (phones)
+      const sill = () => Math.min(winEl()?.closest('section')?.getBoundingClientRect().bottom ?? Infinity, window.innerHeight);
+      const stacked = () => window.innerWidth < 1024; // single-column hero: ORI goes beside the text, smaller
+      const normalH = () => Math.min(250, Math.max(140, window.innerWidth * 0.19));
+      const ASPECT = 208 / 250;
+      let size = normalH(); // current box height, px (width follows ASPECT)
+      let handFrac = 0.55; // where the hands are, as a fraction of the box height (measured each frame)
+      /** ORI's pose in the window: big enough to fill it, hands resting on the sill. */
+      const windowPose = (): Pose | null => {
+        const el = winEl();
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        const s = sill();
+        if (stacked()) {
+          const h = window.innerHeight * 0.34;
+          const w = h * ASPECT;
+          return { x: rtl() ? 6 : window.innerWidth - w - 6, y: s - h * handFrac, h };
+        }
+        const h = Math.min(window.innerHeight * 1.05, Math.max(260, (s - r.top) / Math.max(0.3, handFrac)));
+        return { x: r.left + r.width / 2 - (h * ASPECT) / 2, y: s - h * handFrac, h };
+      };
+      const atTop = () => window.scrollY < 40;
+      const pastWindow = () => window.scrollY > 90;
+      let leap: Leap | null = null;
+      let leapTo: Pose | null = null; // fixed destination when leaping out
+      let lean = 0; // 0..1 how much the arms lean on the sill
+      let rise = 0; // 0..1 the first peek up from behind the sill
+      let scrollSpeed = 0;
+      if (winEl() && atTop() && !reduced) mode = 'window';
       let pending: { clip: ClipName; mood: ExpressionName; until: number } | null = null;
       const start = corner();
       let roam: RoamState = { pos: start, vel: { x: 0, y: 0 }, target: start, nextAt: 2.5 };
@@ -225,9 +274,22 @@ export function OriCompanion({ active }: { active: boolean }) {
       let trip: Trip | null = null; // the current curved trip while roaming
       let lastDir: Vec | undefined; // last trip's heading, so the next one doesn't double back
       const wander = makeWander(Math.random);
-      const place = (p: Vec, bank = 0) => {
-        wrap.style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0) rotate(${bank.toFixed(2)}deg)`;
+      const place = (p: Vec, bank = 0, sx = 1, sy = 1) => {
+        wrap.style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0) rotate(${bank.toFixed(2)}deg) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
       };
+      let appliedH = 0;
+      const applySize = (h: number) => {
+        if (Math.abs(h - appliedH) < 0.5) return;
+        appliedH = h;
+        wrap.style.height = `${h.toFixed(1)}px`;
+        wrap.style.width = `${(h * ASPECT).toFixed(1)}px`;
+      };
+      /** Hide what is below the sill (ORI is behind the hero's bottom edge). */
+      const clipAt = (topY: number, h: number, sillY: number | null) => {
+        const cut = sillY === null ? 0 : Math.max(0, topY + h - sillY);
+        wrap.style.clipPath = cut > 0 ? `inset(0 0 ${cut.toFixed(1)}px 0)` : '';
+      };
+      applySize(size);
       place(start);
       wrap.style.visibility = 'visible';
 
@@ -246,7 +308,7 @@ export function OriCompanion({ active }: { active: boolean }) {
         (entries) => {
           for (const en of entries) {
             const id = en.target.id;
-            if (!en.isIntersecting || seen.has(id) || clock.elapsedTime < busyUntil || mode === 'park') continue;
+            if (!en.isIntersecting || seen.has(id) || clock.elapsedTime < busyUntil || mode === 'park' || mode === 'window' || mode === 'leap') continue;
             seen.add(id);
             const r = SECTION_REACTIONS[id];
             if (reduced) continue;
@@ -260,6 +322,7 @@ export function OriCompanion({ active }: { active: boolean }) {
       let flyTimer = 0;
       const offs = [
         oriOn('open', () => {
+          leap = null; // from the window too: the size eases down to normal in the corner
           mode = 'park';
           trip = null;
           pending = null;
@@ -355,13 +418,96 @@ export function OriCompanion({ active }: { active: boolean }) {
         const t = clock.elapsedTime;
         mixer.update(dt);
 
-        // ---- movement: roam / fly / park, dragged by scroll, always clamped on screen
+        // ---- the arms: blend from the clip's pose to leaning on the sill
+        const want = (window as unknown as { __oriLean?: typeof LEAN }).__oriLean ?? LEAN;
+        const leanTarget = mode === 'window' ? 1 : mode === 'leap' && leap && leap.dir === 'in' ? Math.max(0, (leapU(leap, t) - 0.75) / 0.25) : 0;
+        lean += (leanTarget - lean) * (1 - Math.exp(-(leanTarget > lean ? 7 : 14) * dt));
+        idle.setEffectiveWeight(1 - lean * 0.85);
+        if (lean > 0.001) {
+          for (const a of arms) {
+            const [ex, ey, ez] = want[a.name] ?? [0, 0, 0];
+            const q = a.rest.clone().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(ex, ey, ez)));
+            a.bone.quaternion.slerp(q, lean);
+          }
+        }
+
+        // ---- movement
         const v = view();
-        const box = boxSize();
-        const b = bounds(v, box, navH());
         const scrollDelta = window.scrollY - lastScroll;
         lastScroll = window.scrollY;
-        if (mode === 'park') roam.target = corner();
+        scrollSpeed = scrollSpeed * 0.85 + Math.abs(scrollDelta / Math.max(dt, 1 / 120)) * 0.15;
+        const sillY = sill();
+        const wp = windowPose();
+
+        if (mode === 'window' && (!wp || pastWindow())) {
+          // the visitor scrolled on: jump out of the window into the page
+          const nh = normalH();
+          const b0 = bounds(v, { w: nh * ASPECT, h: nh }, navH());
+          const right = roam.pos.x + (size * ASPECT) / 2 > v.w / 2;
+          leapTo = { x: right ? b0.maxX - Math.random() * v.w * 0.12 : b0.minX + Math.random() * v.w * 0.12, y: b0.maxY - Math.random() * v.h * 0.25, h: nh };
+          leap = planLeap('out', { x: roam.pos.x, y: roam.pos.y, h: size }, t, v.h, scrollSpeed / 3000, Math.random);
+          mode = 'leap';
+          setMood('excited', 1.6);
+        } else if ((mode === 'roam' || mode === 'fly') && wp && atTop() && !reduced) {
+          // back at the top: jump back into the window
+          leapTo = null;
+          trip = null;
+          pending = null;
+          leap = planLeap('in', { x: roam.pos.x, y: roam.pos.y, h: size }, t, v.h, scrollSpeed / 3000, Math.random);
+          mode = 'leap';
+          setMood('happy', 2);
+        }
+
+        if (mode === 'window' && wp) {
+          // alive in the window: a slow breath and a little sway, never the same twice
+          rise = Math.min(1, rise + dt / 1.3);
+          const up = 1 - (1 - rise) ** 3;
+          const w2 = wander(t, 5);
+          size += (wp.h - size) * (1 - Math.exp(-6 * dt));
+          roam.pos = { x: wp.x + w2.x, y: wp.y + w2.y * 0.6 + Math.sin(t * 1.25) * 2.5 + (1 - up) * size * 0.5 };
+          roam.vel = { x: 0, y: 0 };
+          applySize(size);
+          clipAt(roam.pos.y, size, sillY);
+          place(roam.pos, w2.x * 0.12);
+        } else if (mode === 'leap' && leap) {
+          const dest = leap.dir === 'in' ? wp : leapTo;
+          if (!dest) {
+            mode = 'roam';
+            leap = null;
+          } else {
+            const p = leapPose(leap, dest, t);
+            const u = leapU(leap, t);
+            size = p.h;
+            roam.pos = { x: p.x, y: p.y };
+            applySize(size);
+            // still behind the sill while climbing out; behind it again while dropping in
+            const behind = leap.dir === 'out' ? u === 0 : u > 0.55; // out: hidden only while crouching
+            clipAt(p.y, p.h, behind ? sillY : null);
+            place(roam.pos, p.rot, p.sx, p.sy);
+            if (u >= 1 && t > leap.t0) {
+              if (leap.dir === 'in') {
+                mode = 'window';
+                rise = 1;
+              } else {
+                mode = 'roam';
+                roam.target = { ...roam.pos };
+                roam.nextAt = t + 1.2;
+                setMood('happy', 2);
+              }
+              leap = null;
+            }
+          }
+        }
+        if (mode !== 'window' && mode !== 'leap') {
+          size += (normalH() - size) * (1 - Math.exp(-5 * dt));
+          applySize(size);
+          clipAt(0, 0, null);
+        }
+        const box = boxSize();
+        const b = bounds(v, box, navH());
+        if (mode === 'window' || mode === 'leap') {
+          // positioned above; the roaming spring sits this frame out
+        } else if (mode === 'park') roam.target = corner();
         else if (mode === 'fly') {
           const arrived = Math.hypot(roam.target.x - roam.pos.x, roam.target.y - roam.pos.y) < 24;
           if (pending && (arrived || t > pending.until)) {
@@ -391,6 +537,7 @@ export function OriCompanion({ active }: { active: boolean }) {
           }
           trip = planTrip(roam.pos, next, t, Math.random, v.mobile);
         }
+        if (mode !== 'window' && mode !== 'leap') {
         roam.target = clampTo(b, roam.target);
         roam = stepRoam(roam, dt, scrollDelta, t, {
           stiffness: v.mobile ? 4 : 6,
@@ -404,6 +551,12 @@ export function OriCompanion({ active }: { active: boolean }) {
         // the never-repeating float on top (small while parked so the bubble stays anchored)
         const wob = wander(t, mode === 'park' ? 4 : v.mobile ? 10 : 22);
         place(clampTo(b, { x: roam.pos.x + wob.x, y: roam.pos.y + wob.y }), Math.max(-8, Math.min(8, roam.vel.x * 0.02)));
+        }
+
+        // face the page: towards the side with more room (the text, when in the window)
+        const yawTarget = roam.pos.x + (size * ASPECT) / 2 > v.w / 2 ? -YAW : YAW;
+        yaw += (yawTarget - yaw) * (1 - Math.exp(-3 * dt));
+        ori.rotation.y = yaw;
 
         if (current && t > busyUntil) backToIdle();
         if (t > moodUntil) mood = 'neutral';
@@ -460,6 +613,14 @@ export function OriCompanion({ active }: { active: boolean }) {
         // the seed glows with its clip-driven FX bone (x = emissive intensity relative to 0.4)
         if (seedGlow && seedMat) seedMat.emissiveIntensity = seedGlow.scale.x / 0.4;
 
+        // where the hands are in the box, so the window pose puts them right on the sill
+        if (handL && handR && mode === 'window') {
+          ori.updateMatrixWorld(true);
+          const hl = new THREE.Vector3().setFromMatrixPosition(handL.matrixWorld).project(camera);
+          const hr = new THREE.Vector3().setFromMatrixPosition(handR.matrixWorld).project(camera);
+          const f = (1 - (hl.y + hr.y) / 2) / 2 + 0.012; // the hands sit on the sill, just above their pivot
+          handFrac += (Math.min(0.85, Math.max(0.3, f)) - handFrac) * 0.2;
+        }
         renderer.render(scene, camera);
         if (!reduced && !document.hidden) raf = requestAnimationFrame(frame);
       };
@@ -526,8 +687,8 @@ export function OriCompanion({ active }: { active: boolean }) {
     <div
       ref={wrapRef}
       aria-hidden="true"
-      style={{ visibility: 'hidden' }}
-      className="pointer-events-none fixed left-0 top-0 z-40 h-[clamp(140px,19vw,250px)] w-[clamp(116px,16vw,208px)] will-change-transform"
+      style={{ visibility: 'hidden', width: 'clamp(116px, 16vw, 208px)', height: 'clamp(140px, 19vw, 250px)', transformOrigin: '50% 100%' }}
+      className="pointer-events-none fixed left-0 top-0 z-40 will-change-transform"
     >
       <div className="absolute inset-x-[22%] bottom-[2%] h-[7%] rounded-[50%] bg-[radial-gradient(closest-side,rgba(13,13,13,0.16),rgba(13,13,13,0))]" />
       {/* clicks on ORI are hit-tested against the mesh in the effect; keyboard users get the

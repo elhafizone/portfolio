@@ -21,7 +21,7 @@
     "start:prod": "next start -p 3211",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test lib/ori/roam.test.ts lib/ori/catalog.test.ts lib/ori/limits.test.ts"
+    "test": "node --test lib/ori/roam.test.ts lib/ori/catalog.test.ts lib/ori/limits.test.ts lib/ori/leap.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

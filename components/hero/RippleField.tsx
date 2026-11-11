@@ -314,7 +314,8 @@ function link(gl: WebGL2RenderingContext, fragSource: string) {
   return program;
 }
 
-export function RippleField({ className = '' }: { className?: string }) {
+/** `calm`: paint only the still gradient (ORI owns the hero now). */
+export function RippleField({ className = '', calm = false }: { className?: string; calm?: boolean }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { reduced, ready } = useMotion();
@@ -343,11 +344,11 @@ export function RippleField({ className = '' }: { className?: string }) {
     const mq = window.matchMedia(
       `(min-width: ${BREAKPOINT.lg}px) and (hover: hover) and (pointer: fine)`
     );
-    const update = () => setEligible(mq.matches);
+    const update = () => setEligible(mq.matches && !calm);
     update();
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);
-  }, []);
+  }, [calm]);
 
   useEffect(() => {
     const host = hostRef.current;

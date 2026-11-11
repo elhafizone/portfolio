@@ -74,71 +74,75 @@ export function Hero() {
       ref={rootRef}
       id="top"
       aria-labelledby="hero-heading"
-      className="relative flex min-h-[100svh] flex-col justify-between overflow-hidden pb-10 pt-28 sm:pt-32 lg:pb-14 lg:pt-36"
+      className="relative flex min-h-[100svh] flex-col justify-between overflow-hidden pb-8 pt-24 sm:pt-28 lg:h-[100svh] lg:min-h-[620px] lg:pb-6 lg:pt-28"
     >
-      <RippleField />
+      {/* the waves are gone: ORI, leaning out of the hero's bottom edge, is the hero now */}
+      <RippleField calm />
 
       {/* Top metadata row */}
       <div className="shell pointer-events-none relative z-10" data-hero="meta">
-        <div className="border-t border-rule/70 pt-5 text-center">
+        <div className="border-t border-rule/70 pt-5 text-start">
           <span className="label label-marked" data-fade>
             {t.identity.role}
           </span>
         </div>
       </div>
 
-      {/* Centred headline + copy */}
-      <div className="shell pointer-events-none relative z-10 flex flex-1 flex-col items-center justify-center py-12 text-center lg:py-8">
-        <h1 id="hero-heading" className="sr-only">
-          {t.identity.name} &mdash; {t.identity.role}
-        </h1>
+      {/* Text on the start side, ORI's window on the end side (mirrors itself in RTL) */}
+      <div className="shell relative z-10 grid flex-1 grid-cols-1 items-center gap-6 py-10 lg:grid-cols-[1.08fr_0.92fr] lg:py-6">
+        <div className="pointer-events-none text-start">
+          <h1 id="hero-heading" className="sr-only">
+            {t.identity.name} &mdash; {t.identity.role}
+          </h1>
 
-        <div data-hero-layer="headline" className="w-full">
-          <SplitText
-            aria-hidden="true"
-            as="div"
-            data-hero="headline"
-            lines={[
-              t.hero.headline[0],
-              <>
-                {t.hero.headline[1]} <span className="serif-accent">{t.hero.accentWord}</span>
-              </>,
-              t.hero.headline[2],
-            ]}
-            className="mega mx-auto max-w-5xl"
-          />
-        </div>
+          <div data-hero-layer="headline" className="w-full">
+            <SplitText
+              aria-hidden="true"
+              as="div"
+              data-hero="headline"
+              lines={[
+                t.hero.headline[0],
+                <>
+                  {t.hero.headline[1]} <span className="serif-accent">{t.hero.accentWord}</span>
+                </>,
+                t.hero.headline[2],
+              ]}
+              className="mega !text-[clamp(2.6rem,5.2vw,5.6rem)]"
+            />
+          </div>
 
-        <div data-hero-layer="copy" className="w-full">
-          <p data-hero="intro" className="lead mx-auto mt-8 max-w-2xl lg:mt-10">
-            {t.hero.intro}
-          </p>
+          <div data-hero-layer="copy" className="w-full">
+            <p data-hero="intro" className="lead mt-6 max-w-xl lg:mt-7">
+              {t.hero.intro}
+            </p>
 
-          <div
-            data-hero="cta"
-            className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:mt-11"
-          >
-            <span data-fade className="pointer-events-auto">
-              <Button href="#work" cursorLabel="VIEW" withArrow>
-                {t.hero.primaryCta}
-              </Button>
-            </span>
-            <span data-fade className="pointer-events-auto">
-              <Button href="#contact" variant="secondary" cursorLabel="TALK">
-                {t.hero.secondaryCta}
-              </Button>
-            </span>
+            <div data-hero="cta" className="mt-7 flex flex-col items-start gap-3 sm:flex-row lg:mt-8">
+              <span data-fade className="pointer-events-auto">
+                <Button href="#work" cursorLabel="VIEW" withArrow>
+                  {t.hero.primaryCta}
+                </Button>
+              </span>
+              <span data-fade className="pointer-events-auto">
+                <Button href="#contact" variant="secondary" cursorLabel="TALK">
+                  {t.hero.secondaryCta}
+                </Button>
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* ORI's window: an empty anchor. OriCompanion sizes ORI to it and leans it on the
+            section's bottom edge (the sill). */}
+        <div data-ori-window aria-hidden="true" className="pointer-events-none h-[34svh] min-h-[220px] lg:h-full lg:min-h-[420px]" />
       </div>
 
       {/* Baseline: stats + scroll hint */}
       <div className="shell pointer-events-none relative z-10" data-hero-layer="baseline">
         <div
           data-hero="stats"
-          className="flex flex-col gap-5 border-t border-rule/70 pt-5 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-5 border-t border-rule/70 pt-5 sm:flex-row sm:items-center sm:gap-12 lg:max-w-[54%]"
         >
-          <dl className="flex flex-wrap items-baseline justify-center gap-x-10 gap-y-3 sm:justify-start">
+          <dl className="flex flex-wrap items-baseline justify-start gap-x-10 gap-y-3">
             {t.hero.meta.map((item) => (
               <div key={item.label} data-fade className="flex items-baseline gap-3">
                 <dt className="label text-ink-mute">{item.label}</dt>
@@ -151,7 +155,7 @@ export function Hero() {
             type="button"
             data-fade
             onClick={() => scrollTo('#work')}
-            className="label group pointer-events-auto flex items-center gap-3 self-center transition-colors hover:text-accent-ink sm:self-auto"
+            className="label group pointer-events-auto flex items-center gap-3 self-start transition-colors hover:text-accent-ink sm:self-auto"
             data-cursor-label="VIEW"
           >
             {t.hero.scrollHint}
@@ -164,6 +168,8 @@ export function Hero() {
           </button>
         </div>
       </div>
+      {/* the sill ORI leans on */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-px bg-rule" />
     </section>
   );
 }

@@ -16,7 +16,7 @@ import { siteCatalog } from '@/lib/ori/siteCatalog';
  * Loaded lazily after the intro by SiteShell, so it adds nothing to first-load JS.
  */
 
-type Turn = { who: 'ori' | 'me'; text: string; items?: CatalogEntry[]; chips?: boolean };
+type Turn = { who: 'ori' | 'me'; text: string; items?: CatalogEntry[] };
 const MAX_INPUT = 300;
 
 export default function OriGuide({ aiEnabled }: { aiEnabled: boolean }) {
@@ -122,9 +122,9 @@ export default function OriGuide({ aiEnabled }: { aiEnabled: boolean }) {
         body: JSON.stringify({ locale, history, message }),
       });
       if (res.status === 429) {
-        setLog((l) => [...l, { who: 'ori', text: copy.limit, chips: true }]);
+        setLog((l) => [...l, { who: 'ori', text: copy.limit }]);
       } else if (!res.ok) {
-        setLog((l) => [...l, { who: 'ori', text: copy.fallback, chips: true }]);
+        setLog((l) => [...l, { who: 'ori', text: copy.fallback }]);
       } else {
         const data = (await res.json()) as { reply?: unknown; items?: unknown };
         const text = typeof data.reply === 'string' && data.reply.trim() ? data.reply.trim() : copy.fallback;
@@ -132,7 +132,7 @@ export default function OriGuide({ aiEnabled }: { aiEnabled: boolean }) {
         oriEmit('reply');
       }
     } catch {
-      setLog((l) => [...l, { who: 'ori', text: copy.fallback, chips: true }]);
+      setLog((l) => [...l, { who: 'ori', text: copy.fallback }]);
     } finally {
       setBusy(false);
     }
@@ -245,12 +245,12 @@ export default function OriGuide({ aiEnabled }: { aiEnabled: boolean }) {
                 <div key={i} className="flex flex-col gap-2">
                   <p className="text-[var(--ink)]">{turn.text}</p>
                   {turn.items?.map(card)}
-                  {turn.chips && chipRow(false)}
                 </div>
               ),
             )}
             {busy && <p className="text-[0.8125rem] text-[var(--ink-mute)]">{copy.thinking}</p>}
-            {log.length <= 1 && chipRow(true)}
+            {/* the ready answers stay available under the latest reply */}
+            {!busy && chipRow(log.length <= 1)}
           </div>
 
           {aiEnabled && (

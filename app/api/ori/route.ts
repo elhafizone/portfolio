@@ -72,7 +72,7 @@ export async function POST(req: Request) {
   try {
     const res = await client.messages.create({
       model: MODEL,
-      max_tokens: 300,
+      max_tokens: 500, // room for three Arabic sentences inside the JSON wrapper
       thinking: { type: 'disabled' },
       output_config: { effort: 'low', format: { type: 'json_schema', schema: replySchema } },
       system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],

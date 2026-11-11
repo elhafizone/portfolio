@@ -54,7 +54,10 @@ export default function OriGuide({ aiEnabled }: { aiEnabled: boolean }) {
   // focus in on open; Esc and outside presses close
   useEffect(() => {
     if (!open) return;
-    bubbleRef.current?.querySelector<HTMLElement>('[data-ori-first]')?.focus({ preventScroll: true });
+    const b = bubbleRef.current;
+    const first =
+      b?.querySelector<HTMLElement>('[data-ori-first]') ?? b?.querySelector<HTMLElement>('input') ?? b?.querySelector<HTMLElement>('button');
+    first?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         close();
@@ -63,7 +66,8 @@ export default function OriGuide({ aiEnabled }: { aiEnabled: boolean }) {
     };
     const onDown = (e: PointerEvent) => {
       const el = e.target as Element | null;
-      if (bubbleRef.current?.contains(el) || el?.closest?.('[data-ori-hit]') || el === triggerRef.current) return;
+      // a press on ORI itself is swallowed by OriCompanion before it gets here
+      if (bubbleRef.current?.contains(el) || el === triggerRef.current) return;
       close();
     };
     document.addEventListener('keydown', onKey);

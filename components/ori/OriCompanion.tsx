@@ -241,6 +241,7 @@ export function OriCompanion({ active }: { active: boolean }) {
       );
 
       // ---- the guide bubble drives ORI through the bus
+      let flyTimer = 0;
       const offs = [
         oriOn('open', () => {
           mode = 'park';
@@ -254,9 +255,13 @@ export function OriCompanion({ active }: { active: boolean }) {
         }),
         oriOn<FlyTo>('fly-to', (d) => {
           // the guide has already started the (Lenis) scroll; fly once the section has settled
+          // ...but never while the bubble holds ORI parked beside it
           const el = d && document.querySelector(d.selector);
-          if (!el || reduced) return;
-          window.setTimeout(() => flyBeside(el, (d.clip as ClipName) ?? 'Point', 'curious'), 900);
+          if (!el || reduced || mode === 'park') return;
+          window.clearTimeout(flyTimer);
+          flyTimer = window.setTimeout(() => {
+            if (mode !== 'park') flyBeside(el, (d.clip as ClipName) ?? 'Point', 'curious');
+          }, 900);
         }),
         oriOn('think', () => {
           setMood('thoughtful', 6);
@@ -272,10 +277,26 @@ export function OriCompanion({ active }: { active: boolean }) {
         }),
       ];
 
-      // ORI's body (not the whole box) takes the click that opens the guide
-      const hit = wrap.querySelector<HTMLElement>('[data-ori-hit]');
-      const onHit = () => oriEmit('open');
-      hit?.addEventListener('click', onHit);
+      // ---- only ORI's actual body takes a click (raycast against the mesh, not a box): a press
+      // on ORI opens the guide and never reaches the link underneath; every other press passes
+      // straight through the pointer-events: none wrapper.
+      const raycaster = new THREE.Raycaster();
+      const ndc = new THREE.Vector2();
+      const overBody = (x: number, y: number) => {
+        const r = canvas.getBoundingClientRect();
+        if (x < r.left || x > r.right || y < r.top || y > r.bottom) return false;
+        ndc.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
+        raycaster.setFromCamera(ndc, camera);
+        return raycaster.intersectObject(ori, true).length > 0;
+      };
+      const onPress = (e: PointerEvent | MouseEvent) => {
+        if (!overBody(e.clientX, e.clientY)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.type === 'click') oriEmit('open');
+      };
+      window.addEventListener('pointerdown', onPress, true);
+      window.addEventListener('click', onPress, true);
       for (const id of Object.keys(SECTION_REACTIONS)) {
         const el = document.getElementById(id);
         if (el) io.observe(el);
@@ -444,7 +465,9 @@ export function OriCompanion({ active }: { active: boolean }) {
       cleanup = () => {
         cancelAnimationFrame(raf);
         offs.forEach((off) => off());
-        hit?.removeEventListener('click', onHit);
+        window.clearTimeout(flyTimer);
+        window.removeEventListener('pointerdown', onPress, true);
+        window.removeEventListener('click', onPress, true);
         document.removeEventListener('visibilitychange', onVisible);
         window.removeEventListener('resize', still);
         document.removeEventListener('pointermove', onMove);
@@ -481,9 +504,9 @@ export function OriCompanion({ active }: { active: boolean }) {
       className="pointer-events-none fixed left-0 top-0 z-40 h-[clamp(140px,19vw,250px)] w-[clamp(116px,16vw,208px)] will-change-transform"
     >
       <div className="absolute inset-x-[22%] bottom-[2%] h-[7%] rounded-[50%] bg-[radial-gradient(closest-side,rgba(13,13,13,0.16),rgba(13,13,13,0))]" />
-      <canvas ref={canvasRef} className="relative block h-full w-full" />
-      {/* the mouse/touch target; keyboard users get the "Talk to ORI" button in OriGuide */}
-      <div data-ori-hit className="pointer-events-auto absolute inset-x-[24%] bottom-[8%] top-[12%] cursor-pointer" />
+      {/* clicks on ORI are hit-tested against the mesh in the effect; keyboard users get the
+          "Talk to ORI" button in OriGuide */}
+      <canvas ref={canvasRef} data-ori-canvas className="relative block h-full w-full" />
     </div>
   );
 }

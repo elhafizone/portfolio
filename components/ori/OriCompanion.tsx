@@ -4,17 +4,20 @@ import { useEffect, useRef } from 'react';
 import type { Mesh, MeshStandardMaterial, WebGLRenderer } from 'three';
 
 import { faceWeights, lidTopWeights, type ExpressionName, type Weights } from '@/components/ori/oriControls';
+import { oriEmit, oriOn, type FlyTo } from '@/lib/ori/bus';
+import { bounds, clampTo, pickWaypoint, stepRoam, type RoamState, type Vec } from '@/lib/ori/roam';
 
 /**
- * ORI, the site's 3D companion (Level 1: character only).
+ * ORI, the site's 3D companion (Level 2: roaming + guide hooks).
  *
- * Floats in the bottom-left corner and never takes a click from the page: the wrapper is
- * pointer-events: none and every interaction is read from document events. Its eyes and head follow
- * the pointer and whatever link or button is hovered; it blinks, waves on arrival, reacts to a few
- * sections as they scroll in, and celebrates when clicked.
+ * Roams the viewport between random waypoints, is dragged by scrolling and springs back, and flies
+ * beside a section the first time it scrolls in. The wrapper is pointer-events: none; only ORI's
+ * body takes a click, which opens the guide bubble (components/ori/OriGuide.tsx) via lib/ori/bus.
+ * While the bubble is open ORI parks in the bottom inline-start corner. Its eyes and head follow
+ * the pointer and whatever link or button is hovered; it blinks and waves on arrival.
  *
  * three.js and the 1.6 MB model load only after the intro, in their own chunk. With reduced motion
- * ORI is drawn once, still, and nothing animates.
+ * ORI is drawn once, still, in the corner, and nothing animates or moves.
  */
 
 type ClipName =
@@ -182,12 +185,7 @@ export function OriCompanion({ active }: { active: boolean }) {
       const onClick = (e: MouseEvent) => {
         lastActivity = performance.now();
         const target = e.target as Element | null;
-        if (inBox(e.clientX, e.clientY) && !target?.closest?.(INTERACTIVE)) {
-          setMood('excited', 2.2);
-          play('Celebrate');
-        } else if (target?.closest?.('a, button')) {
-          setMood('happy', 1.4);
-        }
+        if (target?.closest?.('a, button')) setMood('happy', 1.4);
       };
       const onScroll = () => {
         lastActivity = performance.now();
@@ -197,20 +195,87 @@ export function OriCompanion({ active }: { active: boolean }) {
       document.addEventListener('click', onClick, { passive: true });
       window.addEventListener('scroll', onScroll, { passive: true });
 
+      // ---- where ORI is on screen
+      const rtl = () => document.documentElement.dir === 'rtl';
+      const view = () => ({ w: window.innerWidth, h: window.innerHeight, mobile: window.innerWidth < 768 });
+      const boxSize = () => ({ w: wrap.offsetWidth, h: wrap.offsetHeight });
+      const navH = () => Math.max(0, document.querySelector('header')?.getBoundingClientRect().bottom ?? 0);
+      const corner = (): Vec => {
+        const b = bounds(view(), boxSize(), navH());
+        return { x: rtl() ? b.maxX : b.minX, y: b.maxY };
+      };
+      type Mode = 'roam' | 'park' | 'fly';
+      let mode: Mode = 'roam';
+      let pending: { clip: ClipName; mood: ExpressionName; until: number } | null = null;
+      const start = corner();
+      let roam: RoamState = { pos: start, vel: { x: 0, y: 0 }, target: start, nextAt: 2.5 };
+      let lastScroll = window.scrollY;
+      const place = (p: Vec, bank = 0) => {
+        wrap.style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0) rotate(${bank.toFixed(2)}deg)`;
+      };
+      place(start);
+      wrap.style.visibility = 'visible';
+
+      /** Fly beside an element (inline-end gutter at its top), then play a clip on arrival. */
+      const flyBeside = (el: Element, clip: ClipName, m: ExpressionName) => {
+        const r = (el.querySelector('h2') ?? el).getBoundingClientRect();
+        const b = bounds(view(), boxSize(), navH());
+        roam.target = clampTo(b, { x: rtl() ? b.minX : b.maxX, y: r.top - boxSize().h * 0.25 });
+        mode = 'fly';
+        pending = { clip, mood: m, until: clock.elapsedTime + 2.5 };
+      };
+
       const seen = new Set<string>();
       const io = new IntersectionObserver(
         (entries) => {
           for (const en of entries) {
             const id = en.target.id;
-            if (!en.isIntersecting || seen.has(id) || clock.elapsedTime < busyUntil) continue;
+            if (!en.isIntersecting || seen.has(id) || clock.elapsedTime < busyUntil || mode === 'park') continue;
             seen.add(id);
             const r = SECTION_REACTIONS[id];
-            setMood(r.mood, 2.6);
-            play(r.clip);
+            if (reduced) continue;
+            flyBeside(en.target, r.clip, r.mood);
           }
         },
         { threshold: 0.3 },
       );
+
+      // ---- the guide bubble drives ORI through the bus
+      const offs = [
+        oriOn('open', () => {
+          mode = 'park';
+          pending = null;
+          setMood('happy', 2.4);
+          play('Wave', 0);
+        }),
+        oriOn('close', () => {
+          mode = 'roam';
+          roam.nextAt = clock.elapsedTime + 1.5;
+        }),
+        oriOn<FlyTo>('fly-to', (d) => {
+          const el = d && document.querySelector(d.selector);
+          if (!el) return;
+          el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+          window.setTimeout(() => flyBeside(el, (d.clip as ClipName) ?? 'Point', 'curious'), 700);
+        }),
+        oriOn('think', () => {
+          setMood('thoughtful', 6);
+          play('Think', 4);
+        }),
+        oriOn('reply', () => {
+          setMood('happy', 2.4);
+          play('Present');
+        }),
+        oriOn('card-open', () => {
+          setMood('excited', 2.2);
+          play('Celebrate');
+        }),
+      ];
+
+      // ORI's body (not the whole box) takes the click that opens the guide
+      const hit = wrap.querySelector<HTMLElement>('[data-ori-hit]');
+      const onHit = () => oriEmit('open');
+      hit?.addEventListener('click', onHit);
       for (const id of Object.keys(SECTION_REACTIONS)) {
         const el = document.getElementById(id);
         if (el) io.observe(el);
@@ -251,6 +316,47 @@ export function OriCompanion({ active }: { active: boolean }) {
         const dt = Math.min(clock.getDelta(), 0.05);
         const t = clock.elapsedTime;
         mixer.update(dt);
+
+        // ---- movement: roam / fly / park, dragged by scroll, always clamped on screen
+        const v = view();
+        const box = boxSize();
+        const b = bounds(v, box, navH());
+        const scrollDelta = window.scrollY - lastScroll;
+        lastScroll = window.scrollY;
+        if (mode === 'park') roam.target = corner();
+        else if (mode === 'fly') {
+          const arrived = Math.hypot(roam.target.x - roam.pos.x, roam.target.y - roam.pos.y) < 24;
+          if (pending && (arrived || t > pending.until)) {
+            setMood(pending.mood, 2.6);
+            play(pending.clip);
+            pending = null;
+            roam.nextAt = t + 3.5; // hold beside the section, then wander again
+            mode = 'roam';
+          }
+        } else if (t > roam.nextAt && !current) {
+          let next = pickWaypoint(v, box, navH(), roam.pos, Math.random);
+          const avoid = hoverEl?.getBoundingClientRect();
+          if (avoid) {
+            for (let i = 0; i < 4; i++) {
+              const hitsIt = next.x < avoid.right && next.x + box.w > avoid.left && next.y < avoid.bottom && next.y + box.h > avoid.top;
+              if (!hitsIt) break;
+              next = pickWaypoint(v, box, navH(), roam.pos, Math.random);
+            }
+          }
+          roam.target = next;
+          roam.nextAt = t + (v.mobile ? 7 + Math.random() * 5 : 4 + Math.random() * 4);
+        }
+        roam.target = clampTo(b, roam.target);
+        roam = stepRoam(roam, dt, scrollDelta, t, {
+          stiffness: v.mobile ? 4 : 6,
+          damping: 2 * Math.sqrt(v.mobile ? 4 : 6),
+          scrollPush: v.mobile ? 0.35 : 0.6,
+        });
+        const clamped = clampTo(b, roam.pos);
+        if (clamped.y !== roam.pos.y) roam.vel.y = 0;
+        if (clamped.x !== roam.pos.x) roam.vel.x = 0;
+        roam.pos = clamped;
+        place(roam.pos, Math.max(-8, Math.min(8, roam.vel.x * 0.02)));
 
         if (current && t > busyUntil) backToIdle();
         if (t > moodUntil) mood = 'neutral';
@@ -308,17 +414,39 @@ export function OriCompanion({ active }: { active: boolean }) {
         if (seedGlow && seedMat) seedMat.emissiveIntensity = seedGlow.scale.x / 0.4;
 
         renderer.render(scene, camera);
-        if (!reduced) raf = requestAnimationFrame(frame);
+        if (!reduced && !document.hidden) raf = requestAnimationFrame(frame);
       };
+
+      // reduced motion: one still frame in the corner; a bubble event re-renders a frame so moods show
+      const still = () => {
+        if (!reduced) return;
+        roam.pos = roam.target = corner();
+        place(roam.pos);
+        frame();
+      };
+      const onVisible = () => {
+        if (reduced || document.hidden) return;
+        cancelAnimationFrame(raf);
+        clock.getDelta(); // drop the hidden time
+        lastScroll = window.scrollY;
+        raf = requestAnimationFrame(frame);
+      };
+      document.addEventListener('visibilitychange', onVisible);
+      window.addEventListener('resize', still);
 
       if (!reduced) {
         setMood('happy', 2.4);
         play('Wave', 0);
       }
       frame();
+      if (reduced) mode = 'park';
 
       cleanup = () => {
         cancelAnimationFrame(raf);
+        offs.forEach((off) => off());
+        hit?.removeEventListener('click', onHit);
+        document.removeEventListener('visibilitychange', onVisible);
+        window.removeEventListener('resize', still);
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerover', onOver);
         document.removeEventListener('click', onClick);
@@ -349,10 +477,13 @@ export function OriCompanion({ active }: { active: boolean }) {
     <div
       ref={wrapRef}
       aria-hidden="true"
-      className="pointer-events-none fixed bottom-3 left-3 z-40 h-[clamp(140px,19vw,250px)] w-[clamp(116px,16vw,208px)] sm:bottom-5 sm:left-5"
+      style={{ visibility: 'hidden' }}
+      className="pointer-events-none fixed left-0 top-0 z-40 h-[clamp(140px,19vw,250px)] w-[clamp(116px,16vw,208px)] will-change-transform"
     >
       <div className="absolute inset-x-[22%] bottom-[2%] h-[7%] rounded-[50%] bg-[radial-gradient(closest-side,rgba(13,13,13,0.16),rgba(13,13,13,0))]" />
       <canvas ref={canvasRef} className="relative block h-full w-full" />
+      {/* the mouse/touch target; keyboard users get the "Talk to ORI" button in OriGuide */}
+      <div data-ori-hit className="pointer-events-auto absolute inset-x-[24%] bottom-[8%] top-[12%] cursor-pointer" />
     </div>
   );
 }

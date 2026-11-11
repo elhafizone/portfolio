@@ -18,3 +18,4 @@ tsconfig.tsbuildinfo
 
 # Production build output, kept separate from the dev server's .next
 .next-prod
+.superpowers/

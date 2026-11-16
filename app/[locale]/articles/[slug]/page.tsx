@@ -69,11 +69,11 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
         {/* Navigation back */}
         <div className="mb-10">
           <Link
-            href={`/${locale}#articles`}
+            href={locale === 'ar' ? '/' : `/${locale}`}
             className="inline-flex items-center gap-2 text-xs font-mono text-muted hover:text-accent transition-colors"
           >
             <span aria-hidden="true">{isAr ? '→' : '←'}</span>
-            <span>{isAr ? 'العودة إلى المقالات' : 'Back to Articles'}</span>
+            <span>{isAr ? 'العودة إلى الرئيسية' : 'Back to home'}</span>
           </Link>
         </div>
 

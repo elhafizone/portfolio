@@ -60,6 +60,7 @@ export const siteConfig = {
 type ContactConfig = {
   email: string;
   whatsapp: string;
+  facebook: string;
   linkedin: string;
   behance: string;
   location: string;
@@ -74,6 +75,8 @@ export const contactConfig: ContactConfig = {
    * so the spacing here is purely for reading: 20 = Egypt, then the number.
    */
   whatsapp: '+20 12 11758105',
+  /** The public Facebook page — the page the ads run from. */
+  facebook: 'https://www.facebook.com/hafizonedev',
   /** TODO: add the LinkedIn profile URL. */
   linkedin: '',
   /** TODO: add the Behance / Dribbble / other portfolio URL. */
@@ -104,6 +107,21 @@ const defaultAnalyticsId = 'G-FYXW2BQ8S3';
 export const analyticsConfig = {
   id: process.env.NEXT_PUBLIC_ANALYTICS_ID || defaultAnalyticsId,
   enabled: Boolean(process.env.NEXT_PUBLIC_ANALYTICS_ID || defaultAnalyticsId),
+} as const;
+
+/**
+ * Meta (Facebook) Pixel. Like the GA ID, a pixel ID is public by design. It is
+ * read from NEXT_PUBLIC_META_PIXEL_ID (a build-time value: rebuild after
+ * setting it) or from `defaultMetaPixelId` below. Empty = the pixel is not
+ * loaded at all, so nothing is sent to Meta until an ID is configured.
+ */
+const defaultMetaPixelId = '';
+
+const metaPixelId = (process.env.NEXT_PUBLIC_META_PIXEL_ID || defaultMetaPixelId).replace(/\D/g, '');
+
+export const metaPixelConfig = {
+  id: metaPixelId,
+  enabled: metaPixelId.length > 0,
 } as const;
 
 export const navLinks = [

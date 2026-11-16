@@ -1,14 +1,17 @@
 'use client';
 
+import Link from 'next/link';
+
 import { useLocale } from '@/components/i18n/LocaleProvider';
 import { useMotion } from '@/components/motion/MotionProvider';
 import { Logo } from '@/components/ui/Logo';
 import { contactConfig } from '@/config/site';
 import { getSocialLinks } from '@/data/social';
+import { localePath } from '@/lib/i18n';
 
 export function Footer() {
   const { scrollTo } = useMotion();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const socials = getSocialLinks();
   const year = new Date().getFullYear();
 
@@ -45,6 +48,14 @@ export function Footer() {
                   </a>
                 </li>
               ))}
+              <li>
+                <Link
+                  href={localePath(locale, '/privacy')}
+                  className="link-underline text-ink-soft transition-colors hover:text-accent-ink"
+                >
+                  {t.footer.privacy}
+                </Link>
+              </li>
             </ul>
           </nav>
 

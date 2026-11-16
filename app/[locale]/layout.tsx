@@ -5,7 +5,8 @@ import Script from 'next/script';
 
 import { LocaleProvider } from '@/components/i18n/LocaleProvider';
 import { SiteShell } from '@/components/layout/SiteShell';
-import { analyticsConfig, contactConfig, siteConfig } from '@/config/site';
+import { MetaPixel } from '@/components/analytics/MetaPixel';
+import { analyticsConfig, contactConfig, metaPixelConfig, siteConfig } from '@/config/site';
 import { getDictionary } from '@/data/content';
 import { profile } from '@/data/profile';
 import {
@@ -116,7 +117,7 @@ export async function generateMetadata({
  * search engines treat as a factual claim.
  */
 function buildJsonLd(locale: Locale) {
-  const sameAs = [contactConfig.linkedin, contactConfig.behance].filter(Boolean);
+  const sameAs = [contactConfig.facebook, contactConfig.linkedin, contactConfig.behance].filter(Boolean);
   const t = getDictionary(locale);
 
   return {
@@ -213,6 +214,7 @@ export default async function LocaleLayout({
             </Script>
           </>
         )}
+        {metaPixelConfig.enabled && <MetaPixel id={metaPixelConfig.id} />}
         <LocaleProvider locale={locale} dictionary={dictionary}>
           <SiteShell oriAi={Boolean(process.env.ANTHROPIC_API_KEY)}>{children}</SiteShell>
         </LocaleProvider>

@@ -1,7 +1,7 @@
 import { contactConfig } from '@/config/site';
 
 /** Ids are stable keys; the visible wording comes from the dictionaries. */
-export type SocialId = 'email' | 'whatsapp' | 'linkedin' | 'behance';
+export type SocialId = 'email' | 'whatsapp' | 'facebook' | 'linkedin' | 'behance';
 
 export type SocialLink = {
   id: SocialId;
@@ -38,6 +38,9 @@ export function getSocialLinks(): SocialLink[] {
       href: `https://wa.me/${contactConfig.whatsapp.replace(/\D/g, '')}`,
       handle: null,
     });
+  }
+  if (contactConfig.facebook) {
+    links.push({ id: 'facebook', href: contactConfig.facebook, handle: null });
   }
   if (contactConfig.linkedin) {
     links.push({ id: 'linkedin', href: contactConfig.linkedin, handle: null });

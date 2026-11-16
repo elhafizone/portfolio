@@ -211,6 +211,14 @@ export function MotionProvider({ children }: { children: ReactNode }) {
       const resolved =
         offset ?? (typeof target === 'string' ? -HEADER_OFFSET : 0);
 
+      // On a sub-page (e.g. /privacy) the home sections are not in the DOM:
+      // go to the home page of the current language and land on the section.
+      if (typeof target === 'string' && target.length > 1 && target.startsWith('#') && !document.getElementById(target.slice(1))) {
+        const home = /^\/en(\/|$)/.test(window.location.pathname) ? '/en' : '/';
+        window.location.assign(`${home}${target}`);
+        return;
+      }
+
       const lenis = lenisRef.current;
       if (lenis) {
         lenis.scrollTo(target, { offset: resolved, duration: 1.15 });

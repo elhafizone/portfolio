@@ -16,7 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ])
   );
 
-  return locales.map((locale) => ({
+  const home = locales.map((locale) => ({
     url: new URL(localePath(locale), siteConfig.url).toString(),
     /*
       A FIXED date, not `new Date()`.
@@ -31,4 +31,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: locale === 'ar' ? 1 : 0.9,
     alternates: { languages },
   }));
+
+  const privacyLanguages = Object.fromEntries(
+    locales.map((locale) => [
+      htmlLang[locale],
+      new URL(localePath(locale, '/privacy'), siteConfig.url).toString(),
+    ])
+  );
+  const privacy = locales.map((locale) => ({
+    url: new URL(localePath(locale, '/privacy'), siteConfig.url).toString(),
+    lastModified: new Date('2026-11-16'),
+    changeFrequency: 'yearly' as const,
+    priority: 0.2,
+    alternates: { languages: privacyLanguages },
+  }));
+
+  return [...home, ...privacy];
 }

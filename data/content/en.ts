@@ -295,6 +295,7 @@ export const en = {
     channels: {
       email: { label: 'Email', hint: 'Write to me' },
       whatsapp: { label: 'WhatsApp', hint: 'Message directly' },
+      facebook: { label: 'Facebook', hint: 'Follow the page' },
       linkedin: { label: 'LinkedIn', hint: 'Professional profile' },
       behance: { label: 'Portfolio', hint: 'More work' },
     },
@@ -366,6 +367,7 @@ export const en = {
     noChannels:
       'Direct channels are not published yet. Use the contact form above and the message reaches the configured inbox.',
     builtInHouse: 'Designed & built in-house',
+    privacy: 'Privacy policy',
     backToTop: 'Back to top',
   },
 
@@ -374,6 +376,64 @@ export const en = {
     title: 'This page doesn’t exist.',
     body: 'The link may be out of date, or the page may have moved.',
     cta: 'Back to the homepage',
+  },
+  privacy: {
+    metaTitle: 'Privacy Policy',
+    metaDescription:
+      'What hafizone.dev collects, why, who processes it and how to ask for it to be deleted.',
+    label: 'Legal',
+    title: 'Privacy Policy',
+    updated: 'Last updated: 16 November 2026',
+    intro:
+      'This page explains what information hafizone.dev collects when you visit it or get in touch, why it is collected, and the choices you have. The site belongs to Mohammed Al-Hafiz, a designer and web developer based in Cairo, Egypt.',
+    sections: [
+      {
+        title: 'What you send me',
+        body: [
+          'When you use the contact form you send your name, email address, project type, budget range and message. They are used only to reply to you about your project. The form does not keep a copy on the website: the message is delivered to my email inbox and kept there as ordinary correspondence.',
+          'If you write to me on WhatsApp or by email, that conversation happens on those services and is covered by their own privacy policies.',
+        ],
+      },
+      {
+        title: 'ORI, the site assistant',
+        body: [
+          'Questions you type to ORI are sent to an AI service (Anthropic) to generate a reply. They are not saved by this website. Please do not type sensitive personal information into the chat.',
+        ],
+      },
+      {
+        title: 'Analytics and advertising',
+        body: [
+          'The site uses Google Analytics to understand, in aggregate, how many people visit and which sections they view.',
+          'The site uses the Meta (Facebook) Pixel to measure the results of ads on Facebook and Instagram: for example, that a visit came from an ad, or that a visitor sent the contact form or opened WhatsApp. The content of your message is never sent to Meta.',
+          'These services set cookies or similar identifiers in your browser and may combine this information with what they already know under their own policies. You can block them with your browser’s privacy settings or an ad blocker, and manage ad preferences in your Facebook and Google account settings. The site works fully without them.',
+        ],
+      },
+      {
+        title: 'Hosting',
+        body: [
+          'The site is hosted by Hostinger. Like any web server, it may keep short-term technical logs (such as IP address and browser type) for security and to keep the site running.',
+        ],
+      },
+      {
+        title: 'Sharing and selling',
+        body: [
+          'I do not sell your information, and I share it only with the services named on this page, for the purposes described here.',
+        ],
+      },
+      {
+        title: 'Your choices',
+        body: [
+          'You can ask what information I hold about you, ask me to correct it, or ask me to delete it, by writing to hello@hafizone.dev. I will reply within a reasonable time.',
+        ],
+      },
+      {
+        title: 'Changes',
+        body: [
+          'If this policy changes, the new version will be published on this page with a new date.',
+        ],
+      },
+    ],
+    back: 'Back to the homepage',
   },
   ori: {
     talk: 'Talk to ORI',

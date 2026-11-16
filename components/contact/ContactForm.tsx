@@ -6,6 +6,7 @@ import { useLocale } from '@/components/i18n/LocaleProvider';
 import { Button } from '@/components/ui/Button';
 import { formConfig } from '@/config/site';
 import { budgetRanges, projectTypes } from '@/data/social';
+import { trackMeta } from '@/lib/metaPixel';
 import {
   initialContactValues,
   validateContact,
@@ -89,6 +90,7 @@ export function ContactForm() {
           return;
         }
 
+        trackMeta('Lead', { content_category: values.projectType });
         setValues(initialContactValues);
         setErrors({});
         setStatus('success');

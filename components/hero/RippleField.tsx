@@ -63,7 +63,7 @@ import { BREAKPOINT } from '@/config/motion';
 /** Courant number C. MUST stay <= 0.5 or the explicit scheme diverges. */
 const WAVE_SPEED = 0.28;
 /** Per-step velocity retention. Lower = shorter-lived ripples. */
-const DAMPING = 0.997;
+const DAMPING = 0.998; // per step; 3 steps a frame now (was 0.997 x 2)
 /**
  * Kinematic viscosity. This is the softness dial: it dissipates short
  * wavelengths much faster than long ones, so ripples smooth out as they
@@ -71,10 +71,17 @@ const DAMPING = 0.997;
  */
 const VISCOSITY = 0.11;
 /** Simulation steps per displayed frame. More = faster propagation. */
-const STEPS_PER_FRAME = 2;
+const STEPS_PER_FRAME = 3;
 /** Height of the simulation lattice. Width follows from the aspect ratio. */
-const SIM_HEIGHT = 256;
-const SIM_WIDTH_MAX = 512;
+const SIM_HEIGHT = 420;
+const SIM_WIDTH_MAX = 840;
+/**
+ * The optics below were tuned on a 256-high lattice. A finer lattice gives smaller per-cell
+ * differences for the same wave, so slope and curvature are scaled back up by this factor
+ * (and its square) to keep the same look while each cell is now ~2 screen px, not ~3.5,
+ * which is what made the old surface read as pixelated.
+ */
+const GRID_SCALE = SIM_HEIGHT / 256;
 /** Momentum added per frame under the pointer. */
 const POINTER_STRENGTH = 0.04;
 /** Radius of the pointer kick, in aspect-corrected UV. Wider = gentler swell. */
@@ -206,6 +213,7 @@ out vec4 outColor;
 
 uniform sampler2D uState;
 uniform vec2  uTexel;
+uniform float uGrid;
 uniform float uAspect;
 uniform vec3  uPaper;
 uniform vec3  uMint;
@@ -244,11 +252,21 @@ vec3 baseGradient(vec2 uv) {
 }
 
 void main() {
+  // taps two cells apart: the derivatives below amplify the half-float rounding of single
+  // neighbouring cells into visible grain; a wider stencil averages it away
+  const float K = 2.0;
+  vec2 tx = vec2(uTexel.x * K, 0.0);
+  vec2 ty = vec2(0.0, uTexel.y * K);
   float h  = texture(uState, vUv).r;
-  float hl = texture(uState, vUv - vec2(uTexel.x, 0.0)).r;
-  float hr = texture(uState, vUv + vec2(uTexel.x, 0.0)).r;
-  float hd = texture(uState, vUv - vec2(0.0, uTexel.y)).r;
-  float hu = texture(uState, vUv + vec2(0.0, uTexel.y)).r;
+  float hl = texture(uState, vUv - tx).r;
+  float hr = texture(uState, vUv + tx).r;
+  float hd = texture(uState, vUv - ty).r;
+  float hu = texture(uState, vUv + ty).r;
+  // the diagonals too: Sobel slope and a 9-point Laplacian, so no single cell shows as a facet
+  float hlu = texture(uState, vUv - tx + ty).r;
+  float hru = texture(uState, vUv + tx + ty).r;
+  float hld = texture(uState, vUv - tx - ty).r;
+  float hrd = texture(uState, vUv + tx - ty).r;
 
   /*
     Optics, tuned soft.
@@ -260,7 +278,10 @@ void main() {
     actually looks like.
   */
   // Central differences give the surface slope; the normal follows from it.
-  vec2 slope = vec2(hr - hl, hu - hd);
+  vec2 slope = vec2(
+    (2.0 * (hr - hl) + (hru - hlu) + (hrd - hld)) * 0.25,
+    (2.0 * (hu - hd) + (hlu - hld) + (hru - hrd)) * 0.25
+  ) * uGrid / K;
   vec3 normal = normalize(vec3(-slope * 30.0, 1.0));
 
   // Small-angle Snell: displace the sampled point by the slope.
@@ -277,8 +298,12 @@ void main() {
   // Caustics: converging wavefronts (negative Laplacian at a crest) focus
   // light and brighten; diverging ones darken. Same quantity the simulation
   // already integrates, reused for the effect it physically produces.
-  float laplacian = hl + hr + hu + hd - 4.0 * h;
-  col -= laplacian * 2.4;
+  float laplacian = (4.0 * (hl + hr + hu + hd) + (hlu + hru + hld + hrd) - 20.0 * h) / 6.0;
+  col -= laplacian * uGrid * uGrid / (K * K) * 1.9; // a touch softer than before: caustics were the harshest part
+
+  // half an 8-bit step of noise: breaks the banding a soft gradient shows on 8-bit screens
+  float n = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  col += (n - 0.5) / 255.0;
 
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }`;
@@ -314,8 +339,7 @@ function link(gl: WebGL2RenderingContext, fragSource: string) {
   return program;
 }
 
-/** `calm`: paint only the still gradient (ORI owns the hero now). */
-export function RippleField({ className = '', calm = false }: { className?: string; calm?: boolean }) {
+export function RippleField({ className = '' }: { className?: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { reduced, ready } = useMotion();
@@ -344,11 +368,11 @@ export function RippleField({ className = '', calm = false }: { className?: stri
     const mq = window.matchMedia(
       `(min-width: ${BREAKPOINT.lg}px) and (hover: hover) and (pointer: fine)`
     );
-    const update = () => setEligible(mq.matches && !calm);
+    const update = () => setEligible(mq.matches);
     update();
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);
-  }, [calm]);
+  }, []);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -452,6 +476,7 @@ export function RippleField({ className = '', calm = false }: { className?: stri
       sage: gl.getUniformLocation(renderProgram, 'uSage'),
       accent: gl.getUniformLocation(renderProgram, 'uAccent'),
       time: gl.getUniformLocation(renderProgram, 'uTime'),
+      grid: gl.getUniformLocation(renderProgram, 'uGrid'),
     };
 
     /* --- display sizing ------------------------------------------------ */
@@ -575,6 +600,7 @@ export function RippleField({ className = '', calm = false }: { className?: stri
       gl.bindTexture(gl.TEXTURE_2D, a.texture);
       gl.uniform1i(renderUniforms.state, 0);
       gl.uniform2f(renderUniforms.texel, 1 / simW, 1 / simH);
+      gl.uniform1f(renderUniforms.grid, GRID_SCALE);
       gl.uniform1f(renderUniforms.aspect, displayW / Math.max(1, displayH));
       gl.uniform3fv(renderUniforms.paper, PALETTE.paper);
       gl.uniform3fv(renderUniforms.mint, PALETTE.mint);

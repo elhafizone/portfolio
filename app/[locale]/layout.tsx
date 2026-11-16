@@ -214,7 +214,7 @@ export default async function LocaleLayout({
             </Script>
           </>
         )}
-        {metaPixelConfig.enabled && <MetaPixel id={metaPixelConfig.id} />}
+        <MetaPixel id={metaPixelConfig.enabled ? metaPixelConfig.id : ''} />
         <LocaleProvider locale={locale} dictionary={dictionary}>
           <SiteShell oriAi={Boolean(process.env.ANTHROPIC_API_KEY)}>{children}</SiteShell>
         </LocaleProvider>

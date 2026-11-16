@@ -14,14 +14,14 @@
  */
 export const en = {
   meta: {
-    title: 'Mohammed Al-Hafiz | Creative Designer & WordPress Developer',
+    title: 'Mohammed Al-Hafiz | WordPress & Web App Designer and Developer',
     description:
-      'Mohammed Al-Hafiz is a Sudanese Creative Designer and WordPress Developer with over 10 years of experience across 3D, graphic, visual, print and digital design. Since 2020 he has focused on building professional WordPress websites that combine modern design, usability and functionality.',
+      'Mohammed Al-Hafiz is a Sudanese designer and developer of WordPress websites and web apps, with over 10 years of experience across 3D, graphic, visual, print and digital design. Since 2020 he has built professional WordPress and WooCommerce websites, and custom web apps with Next.js, React and TypeScript, including interactive 3D experiences.',
   },
 
   identity: {
     name: 'Mohammed Al-Hafiz',
-    role: 'Creative Designer & WordPress Developer',
+    role: 'Designer & Developer — WordPress & Web Apps',
     plateFacts: ['10+ Years', 'WordPress since 2020'],
   },
 
@@ -49,10 +49,10 @@ export const en = {
     /** The word set in the serif accent face, inside line 2. */
     accentWord: 'digital',
     intro:
-      'Creative Designer & WordPress Developer. For over ten years I have been turning brands, ideas and businesses into clear, modern digital experiences.',
+      'Designer and developer of WordPress websites and web apps. For over ten years I have been turning brands, ideas and businesses into clear, modern, fast digital experiences.',
     meta: [
       { label: 'Experience', value: '10+ Years of Design' },
-      { label: 'Focus', value: 'WordPress since 2020' },
+      { label: 'Focus', value: 'WordPress & Web Apps' },
     ],
     primaryCta: 'View My Work',
     secondaryCta: 'Let’s Work Together',
@@ -168,7 +168,7 @@ export const en = {
     intro:
       'A practical toolset, chosen deliberately. I customise where a project needs it, and stay standard where standard is genuinely better.',
     centreLabel: 'Centre',
-    groups: { WordPress: 'WordPress', Design: 'Design', Approach: 'Approach' },
+    groups: { WordPress: 'WordPress', WebApps: 'Web Apps', Design: 'Design', Approach: 'Approach' },
   },
 
   experience: {
@@ -253,7 +253,7 @@ export const en = {
     eyebrow: 'About',
     title: ['Who I', 'Am'],
     bio: [
-      'Creative Designer and WordPress Developer with over 10 years of experience across 3D, graphic, visual, print and digital design.',
+      'Designer and developer of WordPress websites and web apps, with over 10 years of experience across 3D, graphic, visual, print and digital design.',
       'I am a Sudanese designer and I studied multimedia at Garden City University (UGC). I started in 3D — interior, exterior and product visualisation — then widened into motion graphics, print and promotional work before moving my focus to the browser.',
       'Since 2020 that focus has been on building professional WordPress websites, combining modern design, usability, performance and function around what each project actually needs.',
       'I work where creativity meets technology: I read a project from both the visual and the technical side, and turn the idea into a clear, distinctive and effective digital experience.',

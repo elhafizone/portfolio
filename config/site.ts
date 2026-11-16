@@ -33,7 +33,7 @@ const isCanonicalDomain = Boolean(process.env.NEXT_PUBLIC_SITE_URL);
 
 export const siteConfig = {
   name: 'Mohammed Al-Hafiz',
-  title: 'Creative Designer & WordPress Developer',
+  title: 'Designer & Developer — WordPress & Web Apps',
   url: resolvedSiteUrl,
   indexable: isCanonicalDomain,
   /**

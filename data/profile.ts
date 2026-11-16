@@ -31,7 +31,7 @@ export const profile = {
   nationality: 'Sudanese',
   nationalityCountry: 'Sudan',
 
-  role: 'Creative Designer & WordPress Developer',
+  role: 'Designer & Developer — WordPress & Web Apps',
 
   positioning:
     'I combine creative design and WordPress development to create modern, practical, and distinctive digital experiences.',
@@ -40,7 +40,7 @@ export const profile = {
     'Designing and building professional digital experiences, end to end.',
 
   oneLine:
-    'Creative Designer & WordPress Developer building modern, professional digital experiences.',
+    'Designer & developer of WordPress websites and web apps, building modern, professional digital experiences.',
 
   bio: [
     'Creative Designer and WordPress Developer with over 10 years of experience across 3D, graphic, visual, print and digital design.',
@@ -93,7 +93,7 @@ export const heroCopy = {
   /** Word (0-indexed within its line) rendered in the serif accent face. */
   accent: { line: 1, word: 1 },
   intro:
-    'Creative Designer & WordPress Developer. Over ten years turning brands, ideas and businesses into clear, modern digital experiences.',
+    'Designer & developer of WordPress websites and web apps. Over ten years turning brands, ideas and businesses into clear, modern digital experiences.',
   meta: [
     { label: 'Experience', value: '10+ Years of Design' },
     { label: 'Focus', value: 'WordPress since 2020' },

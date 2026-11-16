@@ -7,7 +7,8 @@ import { useEffect, useRef } from 'react';
 import { trackMeta } from '@/lib/metaPixel';
 
 /**
- * Meta (Facebook) Pixel.
+ * Meta (Facebook) Pixel, plus the shared Contact listener (also reported to GA4).
+ * With no pixel ID the listener still runs, so GA4 gets the events either way.
  *
  * - The base code loads `lazyOnload`, after the page is idle, so it never
  *   competes with the hero for bandwidth.
@@ -45,6 +46,8 @@ export function MetaPixel({ id }: { id: string }) {
     document.addEventListener('click', onClick, { capture: true });
     return () => document.removeEventListener('click', onClick, { capture: true });
   }, []);
+
+  if (!id) return null;
 
   return (
     <>

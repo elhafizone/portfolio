@@ -6,6 +6,7 @@ import { useLocale } from '@/components/i18n/LocaleProvider';
 import { Button } from '@/components/ui/Button';
 import { formConfig } from '@/config/site';
 import { budgetRanges, projectTypes } from '@/data/social';
+import { ChoiceSelect } from '@/components/contact/ChoiceSelect';
 import { trackMeta } from '@/lib/metaPixel';
 import {
   initialContactValues,
@@ -49,6 +50,14 @@ export function ContactForm() {
         setValues((prev) => ({ ...prev, [field]: value }));
         setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
       },
+    []
+  );
+  /** Same as `update`, for the custom selects (they hand back the value, not an event). */
+  const choose = useCallback(
+    (field: keyof ContactPayload) => (value: string) => {
+      setValues((prev) => ({ ...prev, [field]: value }));
+      setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+    },
     []
   );
 
@@ -198,24 +207,21 @@ export function ContactForm() {
           required
           error={messageFor('projectType')}
         >
-          <select
+          {/* The value submitted is the canonical English one; only the label
+              is translated, so the inbox and validation stay language-neutral. */}
+          <ChoiceSelect
             id="contact-projectType"
             name="projectType"
-            className={`${fieldBase} appearance-none`}
+            className={fieldBase}
             value={values.projectType}
-            onChange={update('projectType')}
-            aria-invalid={Boolean(errors.projectType)}
-            aria-describedby={errors.projectType ? 'contact-projectType-error' : undefined}
-          >
-            <option value="">{t.form.selectOption}</option>
-            {/* The value submitted is the canonical English one; only the label
-                is translated, so the inbox and validation stay language-neutral. */}
-            {projectTypes.map((type, i) => (
-              <option key={type} value={type}>
-                {t.form.projectTypes[i]}
-              </option>
-            ))}
-          </select>
+            onChange={choose('projectType')}
+            invalid={Boolean(errors.projectType)}
+            describedBy={errors.projectType ? 'contact-projectType-error' : undefined}
+            options={[
+              { value: '', label: t.form.selectOption },
+              ...projectTypes.map((type, i) => ({ value: type, label: t.form.projectTypes[i] })),
+            ]}
+          />
         </Field>
 
         <Field
@@ -224,22 +230,19 @@ export function ContactForm() {
           hint={t.form.optional}
           error={messageFor('budget')}
         >
-          <select
+          <ChoiceSelect
             id="contact-budget"
             name="budget"
-            className={`${fieldBase} appearance-none`}
+            className={fieldBase}
             value={values.budget}
-            onChange={update('budget')}
-            aria-invalid={Boolean(errors.budget)}
-            aria-describedby={errors.budget ? 'contact-budget-error' : undefined}
-          >
-            <option value="">{t.form.preferNotToSay}</option>
-            {budgetRanges.map((range, i) => (
-              <option key={range} value={range}>
-                {t.form.budgetRanges[i]}
-              </option>
-            ))}
-          </select>
+            onChange={choose('budget')}
+            invalid={Boolean(errors.budget)}
+            describedBy={errors.budget ? 'contact-budget-error' : undefined}
+            options={[
+              { value: '', label: t.form.preferNotToSay },
+              ...budgetRanges.map((range, i) => ({ value: range, label: t.form.budgetRanges[i] })),
+            ]}
+          />
         </Field>
 
         <div className="sm:col-span-2">

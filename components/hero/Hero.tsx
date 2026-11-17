@@ -98,13 +98,19 @@ export function Hero() {
             aria-hidden="true"
             as="div"
             data-hero="headline"
-            lines={[
-              t.hero.headline[0],
-              <>
-                {t.hero.headline[1]} <span className="serif-accent">{t.hero.accentWord}</span>
-              </>,
-              t.hero.headline[2],
-            ]}
+            lines={t.hero.headline.map((line) => {
+              // The accent word can sit anywhere in any line; a line without
+              // it renders as plain text.
+              const at = line.indexOf(t.hero.accentWord);
+              if (at === -1) return line;
+              return (
+                <>
+                  {line.slice(0, at)}
+                  <span className="serif-accent">{t.hero.accentWord}</span>
+                  {line.slice(at + t.hero.accentWord.length)}
+                </>
+              );
+            })}
             className="mega mx-auto max-w-5xl"
           />
         </div>

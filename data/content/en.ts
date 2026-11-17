@@ -45,11 +45,11 @@ export const en = {
   },
 
   hero: {
-    headline: ['Designing Ideas.', 'Building', 'Experiences.'],
-    /** The word set in the serif accent face, inside line 2. */
-    accentWord: 'digital',
+    headline: ['Websites that convince', 'your client before', 'you say a word.'],
+    /** The word set in the serif accent face, wherever it appears in the headline. */
+    accentWord: 'convince',
     intro:
-      'Designer and developer of WordPress websites and web apps. For over ten years I have been turning brands, ideas and businesses into clear, modern, fast digital experiences.',
+      'I am Mohammed Al-Hafiz, a designer and developer. I build WordPress websites, online stores and web apps for companies, clinics and brands.',
     meta: [
       { label: 'Experience', value: '10+ Years of Design' },
       { label: 'Focus', value: 'WordPress & Web Apps' },

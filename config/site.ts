@@ -114,8 +114,11 @@ export const analyticsConfig = {
  * read from NEXT_PUBLIC_META_PIXEL_ID (a build-time value: rebuild after
  * setting it) or from `defaultMetaPixelId` below. Empty = the pixel is not
  * loaded at all, so nothing is sent to Meta until an ID is configured.
+ *
+ * The default is the dataset selected on the ad account the campaigns run from
+ * (named "1000 Book" in Events Manager when it was added on 2026-11-17).
  */
-const defaultMetaPixelId = '';
+const defaultMetaPixelId = '1223042979977890';
 
 const metaPixelId = (process.env.NEXT_PUBLIC_META_PIXEL_ID || defaultMetaPixelId).replace(/\D/g, '');
 
